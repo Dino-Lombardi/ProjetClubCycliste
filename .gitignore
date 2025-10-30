@@ -90,7 +90,7 @@ local.properties
 *.rar
 
 # Fichiers de verrouillage Access
-lib/*.laccdb
+ressource/*.laccdb
 
 # Sauf ceux dans libs/
 !lib/*.jar

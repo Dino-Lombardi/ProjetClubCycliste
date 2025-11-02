@@ -3,6 +3,7 @@ package be.Lombardi.pojo;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale.Category;
 import java.util.Set;
 
 public class Member extends Person{
@@ -61,15 +62,21 @@ public class Member extends Person{
         bikes = new ArrayList<>();
         inscriptions = new ArrayList<>();
 	}
-	public Member(int id, String name, String firstname, String tel, String password, double balance, Set<CategoryType> categories) {
-		super(id, name, firstname, tel, password);
+	public Member(int id, String name, String firstname, String tel, String username, String password, double balance) {
+		super(id, name, firstname, tel, username, password);
         this.balance = balance;
-        this.categories = categories != null ? categories : new HashSet<>();
+        this.categories = new HashSet<>();
         this.vehicles = new ArrayList<>();
         this.bikes = new ArrayList<>();
         this.inscriptions = new ArrayList<>();
 	}
 	
+	
+	@Override
+	public String toString() {
+		return super.toString() + " " + balance + " " + categories;
+	}
+
 	
 	
 }

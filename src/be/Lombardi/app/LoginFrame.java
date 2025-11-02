@@ -5,6 +5,16 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
+import be.Lombardi.daofactory.DAOFactory;
+import be.Lombardi.daofactory.AbstractDAOFactory;
+import be.Lombardi.pojo.Manager;
+import be.Lombardi.pojo.Member;
+import be.Lombardi.pojo.Person;
+import be.Lombardi.pojo.Treasurer;
+import be.Lombardi.dao.DAO;
+import be.Lombardi.dao.PersonDAO;
+
 import java.awt.GridBagLayout;
 import javax.swing.JTextField;
 import java.awt.GridBagConstraints;
@@ -14,6 +24,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.GridLayout;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import java.awt.event.ActionListener;
@@ -33,7 +44,10 @@ public class LoginFrame extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					LoginFrame frame = new LoginFrame();
+					AbstractDAOFactory adf = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
+					DAO<Person> personDAO = adf.getPersonDAO();
+					
+					LoginFrame frame = new LoginFrame(personDAO);
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -45,7 +59,7 @@ public class LoginFrame extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public LoginFrame() {
+	public LoginFrame(DAO<Person> personDAO) {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 578, 363);
 		contentPane = new JPanel();
@@ -108,6 +122,42 @@ public class LoginFrame extends JFrame {
 		JButton submitButton = new JButton("Se connecter");
 		submitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				String username = usernameField.getText().trim();
+		        String pass = new String(passwordField.getPassword()).trim();
+
+		        // Validation de base
+		        if (username.isEmpty() || pass.isEmpty() || username.equals("Nom d'utilisateur") || pass.equals("Mot de passe")) {
+		            JOptionPane.showMessageDialog(submitButton, "Veuillez entrer vos identifiants.", "Erreur", JOptionPane.ERROR_MESSAGE);
+		            return;
+		        }
+		        
+		        
+		        if(personDAO instanceof PersonDAO personDAOlogin) {
+			        Person person = personDAOlogin.login(username, pass);
+
+			        if(person == null) {
+				        JOptionPane.showMessageDialog(submitButton,
+				        "Nom d'utilisateur ou mot de passe incorrect.",
+				        "Erreur de connexion", JOptionPane.ERROR_MESSAGE);
+			        }else {
+				        JOptionPane.showMessageDialog(submitButton,
+				        "Bienvenue " + person.getFirstname() + " !");
+				         dispose();
+				         
+				         if(person instanceof Member) 
+				        	 new MemberDashboardFrame((Member) person).setVisible(true);
+				        
+				         else if(person instanceof Manager) 
+				        	 new ManagerDashboardFrame((Manager) person).setVisible(true);
+				         
+				         else if(person instanceof Treasurer)
+				        	 new TreasurerDashboardFrame((Treasurer) person).setVisible(true);
+				        	 
+			        }
+			       
+		        }
+		        
+		        	
 			}
 		});
 		submitButton.setBounds(212, 220, 136, 23);

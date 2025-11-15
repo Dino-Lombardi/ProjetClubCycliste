@@ -11,9 +11,11 @@ public class Ride {
 	private String startPlace;
 	private LocalDateTime startDate;
 	private double fee;
+	private Manager organizer;
 	private CategoryType category;
-	private List<Vehicle> vehicles;
-	private Set<Inscription> inscriptions;
+	private List<Vehicle> vehicles = new ArrayList<>();
+	private Set<Inscription> inscriptions = new HashSet<>();; 
+	private int max_insriptions;
 	
 	public int getId() {
 		return id;
@@ -31,6 +33,10 @@ public class Ride {
 		return fee;
 	}
 	
+	public Manager getOrganizer() {
+		return organizer;
+	}
+	
 	public CategoryType getCategory() {
 		return category;
 	}
@@ -41,6 +47,10 @@ public class Ride {
 	
 	public Set<Inscription> getInscriptions() {
 		return inscriptions;
+	}
+	
+	public int getMax_insriptions() {
+		return max_insriptions;
 	}
 	
 	public void setId(int id) {
@@ -59,6 +69,10 @@ public class Ride {
 		this.fee = fee;
 	}
 	
+	public void setOrganizer(Manager organizer) {
+		this.organizer = organizer;
+	}
+	
 	public void setCategory(CategoryType category) {
 		this.category = category;
 	}
@@ -70,21 +84,106 @@ public class Ride {
 	public void setInscriptions(Set<Inscription> inscriptions) {
 		this.inscriptions = inscriptions;
 	}
+	
+	public void setMax_insriptions(int max_insriptions) {
+		this.max_insriptions = max_insriptions;
+	}
 
 	public Ride() {
-		vehicles = new ArrayList<>();
-		inscriptions = new HashSet<>();
 	}
 	
-	public Ride(int id, String startPlace, LocalDateTime startDate, double fee, CategoryType category) {
+	public Ride(int id, String startPlace, LocalDateTime startDate, double fee, Manager organizer, int max_inscriptions, CategoryType category) {
 		this();
 		this.id = id;
 		this.startPlace = startPlace;
 		this.startDate = startDate;
 		this.fee = fee;
+		this.organizer = organizer;
+		this.max_insriptions = max_inscriptions;
 		this.category = category;
 	}
 
 	
-	
+	 // Méthodes de vérification
+    public boolean canMemberSubscribe(Member member) {
+        return !isDatePassed() && 
+               !isMemberAlreadyRegistered(member) && 
+               !isMaxRegistrationsReached();
+    }
+    
+    public boolean isDatePassed() {
+        return LocalDateTime.now().isAfter(startDate);
+    }
+    
+    public boolean isMemberAlreadyRegistered(Member member) {
+        return inscriptions.stream()
+            .anyMatch(ins -> ins.getMember().getId() == member.getId());
+    }
+    
+    public boolean isMaxRegistrationsReached() {
+        return inscriptions.size() >= max_insriptions;
+    }
+    
+    public boolean hasAvailablePassengerSpots() {
+        int totalPassengerCapacity = vehicles.stream()
+            .mapToInt(v -> v.getSeatNumber() - 1) // -1 pour le conducteur
+            .sum();
+        long usedPassengerSpots = inscriptions.stream()
+            .filter(Inscription::isPassenger)
+            .count();
+        return usedPassengerSpots < totalPassengerCapacity;
+    }
+    
+    public boolean hasAvailableBikeSpots() {
+        int totalBikeCapacity = vehicles.stream()
+            .mapToInt(Vehicle::getBikeSpotNumber)
+            .sum();
+        long usedBikeSpots = inscriptions.stream()
+            .filter(Inscription::hasBike)
+            .count();
+        return usedBikeSpots < totalBikeCapacity;
+    }
+    
+    // Getters pour l'affichage
+    public int getAvailablePassengerSpots() {
+        int totalPassengerCapacity = vehicles.stream()
+            .mapToInt(v -> v.getSeatNumber() - 1)
+            .sum();
+        long usedPassengerSpots = inscriptions.stream()
+            .filter(Inscription::isPassenger)
+            .count();
+        return totalPassengerCapacity - (int) usedPassengerSpots;
+    }
+    
+    public int getAvailableBikeSpots() {
+        int totalBikeCapacity = vehicles.stream()
+            .mapToInt(Vehicle::getBikeSpotNumber)
+            .sum();
+        long usedBikeSpots = inscriptions.stream()
+            .filter(Inscription::hasBike)
+            .count();
+        return totalBikeCapacity - (int) usedBikeSpots;
+    }
+    
+    public String getSubscriptionStatus() {
+        if (isDatePassed()) {
+            return "Terminée";
+        } else if (isMaxRegistrationsReached()) {
+            return "Complète";
+        } else {
+            return "Disponible";
+        }
+    }
+    
+    public String getSubscriptionStatusForMember(Member member) {
+        if (isDatePassed()) {
+            return "Terminée";
+        } else if (isMemberAlreadyRegistered(member)) {
+            return "Déjà inscrit";
+        } else if (isMaxRegistrationsReached()) {
+            return "Complète";
+        } else {
+            return "Disponible";
+        }
+    }
 }

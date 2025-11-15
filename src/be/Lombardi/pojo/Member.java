@@ -3,15 +3,14 @@ package be.Lombardi.pojo;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale.Category;
 import java.util.Set;
 
 public class Member extends Person{
 	private double balance;
-    private Set<CategoryType> categories;
-    private List<Vehicle> vehicles;
-    private List<Bike> bikes;
-    private List<Inscription> inscriptions;
+    private Set<CategoryType> categories = new HashSet<>();;
+    private List<Vehicle> vehicles = new ArrayList<>();
+    private List<Bike> bikes = new ArrayList<>();
+    private List<Inscription> inscriptions = new ArrayList<>();
 	
 	public double getBalance() {
 		return balance;
@@ -57,18 +56,11 @@ public class Member extends Person{
 	
 	public Member() {
 		super();
-		categories = new HashSet<>();
-        vehicles = new ArrayList<>();
-        bikes = new ArrayList<>();
-        inscriptions = new ArrayList<>();
+		
 	}
 	public Member(int id, String name, String firstname, String tel, String username, String password, double balance) {
 		super(id, name, firstname, tel, username, password);
         this.balance = balance;
-        this.categories = new HashSet<>();
-        this.vehicles = new ArrayList<>();
-        this.bikes = new ArrayList<>();
-        this.inscriptions = new ArrayList<>();
 	}
 	
 	

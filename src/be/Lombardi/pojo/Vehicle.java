@@ -2,14 +2,15 @@ package be.Lombardi.pojo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Vehicle {
 	private int id;
     private int seatNumber;
     private int bikeSpotNumber;
-    private Member driver;
-    private List<Member> passengers;
-    private List<Bike> bikes;
+    private Member owner;
+    private List<Member> passengers = new ArrayList<>();
+    private List<Bike> bikes = new ArrayList<>();;
 	
     public int getId() {
 		return id;
@@ -24,7 +25,7 @@ public class Vehicle {
 	}
 
 	public Member getDriver() {
-		return driver;
+		return owner;
 	}
 
 	public List<Member> getPassengers() {
@@ -47,8 +48,8 @@ public class Vehicle {
 		this.bikeSpotNumber = bikeSpotNumber;
 	}
 
-	public void setDriver(Member driver) {
-		this.driver = driver;
+	public void setDriver(Member owner) {
+		this.owner = owner;
 	}
 
 	public void setPassengers(List<Member> passengers) {
@@ -60,18 +61,93 @@ public class Vehicle {
 	}
     
     public Vehicle() {
-        passengers = new ArrayList<>();
-        bikes = new ArrayList<>();
+        
     }
 
-    public Vehicle(int id, int seatNumber, int bikeSpotNumber, Member driver) {
+    public Vehicle(int id, int seatNumber, int bikeSpotNumber, Member owner) {
         this();
         this.id = id;
         this.seatNumber = seatNumber;
         this.bikeSpotNumber = bikeSpotNumber;
-        this.driver = driver;
+        this.owner = owner;
     }
 
+    
+    public int getAvailablePassengerSeats() {
+        return (seatNumber - 1) - passengers.size();
+    }
+    
+    
+    public int getAvailableBikeSpots() {
+        return bikeSpotNumber - bikes.size();
+    }
+    
+    
+    public boolean canAcceptPassenger() {
+        return getAvailablePassengerSeats() > 0;
+    }
+    
+   
+    public boolean canAcceptBike() {
+        return getAvailableBikeSpots() > 0;
+    }
+    
+    
+    public boolean addPassengerSafely(Member passenger) {
+        if (canAcceptPassenger() && !passengers.contains(passenger)) {
+            passengers.add(passenger);
+            return true;
+        }
+        return false;
+    }
+    
+   
+    public boolean addBikeSafely(Bike bike) {
+        if (canAcceptBike() && !bikes.contains(bike)) {
+            bikes.add(bike);
+            return true;
+        }
+        return false;
+    }
+    
+    
+    public boolean removePassenger(Member passenger) {
+        return passengers.remove(passenger);
+    }
+    
+    
+    public boolean removeBike(Bike bike) {
+        return bikes.remove(bike);
+    }
+    
+   
+    public boolean isFull() {
+        return !canAcceptPassenger() && !canAcceptBike();
+    }
+    
+   
+    public boolean isEmpty() {
+        return passengers.isEmpty() && bikes.isEmpty();
+    }
+    
+
+    @Override
+    public String toString() {
+        return String.format("Véhicule %d (%s) - %s", id, owner != null ? owner.getFirstname() : "N/A");
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Vehicle vehicle = (Vehicle) obj;
+        return id == vehicle.id;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 
 	
 	

@@ -1,12 +1,25 @@
 package be.Lombardi.app;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-
-import be.Lombardi.daofactory.DAOFactory;
 import be.Lombardi.daofactory.AbstractDAOFactory;
 import be.Lombardi.pojo.Manager;
 import be.Lombardi.pojo.Member;
@@ -15,158 +28,167 @@ import be.Lombardi.pojo.Treasurer;
 import be.Lombardi.dao.DAO;
 import be.Lombardi.dao.PersonDAO;
 
-import java.awt.GridBagLayout;
-import javax.swing.JTextField;
-import java.awt.GridBagConstraints;
-import javax.swing.JPasswordField;
-import java.awt.Insets;
+
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.GridLayout;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JButton;
-import javax.swing.SwingConstants;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 public class LoginFrame extends JFrame {
 
-	private static final long serialVersionUID = 1L;
-	private JPanel contentPane;
-	private JTextField usernameField;
-	private JPasswordField passwordField;
+    private static final long serialVersionUID = 1L;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private final AbstractDAOFactory adf = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
+    private final DAO<Person> personDAO = adf.getPersonDAO();
 
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					AbstractDAOFactory adf = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
-					DAO<Person> personDAO = adf.getPersonDAO();
-					
-					LoginFrame frame = new LoginFrame(personDAO);
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
+    // === MAIN ===
+    public static void main(String[] args) {
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-	/**
-	 * Create the frame.
-	 */
-	public LoginFrame(DAO<Person> personDAO) {
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 578, 363);
-		contentPane = new JPanel();
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		setContentPane(contentPane);
-		contentPane.setLayout(null);
-		setTitle("Page de connexion");
-		
-		usernameField = new JTextField();
-		usernameField.setHorizontalAlignment(SwingConstants.CENTER);
-		usernameField.setText("Nom d'utilisateur");
-		usernameField.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusGained(FocusEvent fe) {
-				if(usernameField.getText().equals("Nom d'utilisateur")) {
-					usernameField.setText("");
-					usernameField.setHorizontalAlignment(SwingConstants.LEADING);
-				}
-			}
-			
-			public void focusLost(FocusEvent fe) {
-				if(usernameField.getText().isEmpty()) {
-					usernameField.setText("Nom d'utilisateur");
-					usernameField.setHorizontalAlignment(SwingConstants.CENTER);
-				}
-			}
-		});
-		usernameField.setBounds(212, 109, 136, 20);
-		contentPane.add(usernameField);
-		usernameField.setColumns(10);
-		
-		passwordField = new JPasswordField();
-		passwordField.setHorizontalAlignment(SwingConstants.CENTER);
-		passwordField.setText("Mot de passe");
-		passwordField.setEchoChar((char) 0);
-		passwordField.addFocusListener(new FocusAdapter() {
-		    @Override
-		    public void focusGained(FocusEvent e) {
-		        String pass = new String(passwordField.getPassword());
-		        if (pass.equals("Mot de passe")) {
-		            passwordField.setText("");
-		            passwordField.setEchoChar('•');
-		            passwordField.setHorizontalAlignment(SwingConstants.LEADING);
-		        }
-		    }
+        EventQueue.invokeLater(() -> new LoginFrame().setVisible(true));
+    }
 
-		    @Override
-		    public void focusLost(FocusEvent e) {
-		        String pass = new String(passwordField.getPassword());
-		        if (pass.isEmpty()) {
-		            passwordField.setEchoChar((char) 0);
-		            passwordField.setText("Mot de passe");
-		            passwordField.setHorizontalAlignment(SwingConstants.CENTER);
-		        }
-		    }
-		});
-		passwordField.setBounds(212, 155, 136, 20);
-		contentPane.add(passwordField);
-		
-		JButton submitButton = new JButton("Se connecter");
-		submitButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String username = usernameField.getText().trim();
-		        String pass = new String(passwordField.getPassword()).trim();
+    // === CONSTRUCTEUR ===
+    public LoginFrame() {
+        setTitle("Connexion - Club Cyclistes");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(480, 320);
+        setLocationRelativeTo(null);
+        setMinimumSize(new Dimension(400, 280));
+        setResizable(true);
 
-		        // Validation de base
-		        if (username.isEmpty() || pass.isEmpty() || username.equals("Nom d'utilisateur") || pass.equals("Mot de passe")) {
-		            JOptionPane.showMessageDialog(submitButton, "Veuillez entrer vos identifiants.", "Erreur", JOptionPane.ERROR_MESSAGE);
-		            return;
-		        }
-		        
-		        
-		        if(personDAO instanceof PersonDAO personDAOlogin) {
-			        Person person = personDAOlogin.login(username, pass);
+        initUI();
+    }
 
-			        if(person == null) {
-				        JOptionPane.showMessageDialog(submitButton,
-				        "Nom d'utilisateur ou mot de passe incorrect.",
-				        "Erreur de connexion", JOptionPane.ERROR_MESSAGE);
-			        }else {
-				        JOptionPane.showMessageDialog(submitButton,
-				        "Bienvenue " + person.getFirstname() + " !");
-				         dispose();
-				         
-				         if(person instanceof Member) 
-				        	 new MemberDashboardFrame((Member) person).setVisible(true);
-				        
-				         else if(person instanceof Manager) 
-				        	 new ManagerDashboardFrame((Manager) person).setVisible(true);
-				         
-				         else if(person instanceof Treasurer)
-				        	 new TreasurerDashboardFrame((Treasurer) person).setVisible(true);
-				        	 
-			        }
-			       
-		        }
-		        
-		        	
-			}
-		});
-		submitButton.setBounds(212, 220, 136, 23);
-		contentPane.add(submitButton);
-		
-		JLabel lblNewLabel = new JLabel("Page de connexion");
-		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		lblNewLabel.setBounds(212, 27, 136, 23);
-		contentPane.add(lblNewLabel);
+    // === INTERFACE ===
+    private void initUI() {
+        setLayout(new BorderLayout(0, 15));
+        ((JComponent) getContentPane()).setBorder(new EmptyBorder(20, 40, 20, 40));
 
-	}
+        JLabel header = new JLabel("Connexion", SwingConstants.CENTER);
+        header.setFont(new Font("SansSerif", Font.BOLD, 22));
+        header.setForeground(new Color(40, 60, 120));
+        add(header, BorderLayout.NORTH);
+
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        add(centerPanel, BorderLayout.CENTER);
+
+        usernameField = new JTextField("Nom d'utilisateur");
+        usernameField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        usernameField.setHorizontalAlignment(SwingConstants.CENTER);
+        usernameField.setMaximumSize(new Dimension(300, 35));
+        usernameField.setForeground(Color.GRAY);
+        usernameField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (usernameField.getText().equals("Nom d'utilisateur")) {
+                    usernameField.setText("");
+                    usernameField.setForeground(Color.BLACK);
+                    usernameField.setHorizontalAlignment(SwingConstants.LEADING);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (usernameField.getText().isEmpty()) {
+                    usernameField.setText("Nom d'utilisateur");
+                    usernameField.setForeground(Color.GRAY);
+                    usernameField.setHorizontalAlignment(SwingConstants.CENTER);
+                }
+            }
+        });
+
+        passwordField = new JPasswordField("Mot de passe");
+        passwordField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        passwordField.setHorizontalAlignment(SwingConstants.CENTER);
+        passwordField.setMaximumSize(new Dimension(300, 35));
+        passwordField.setForeground(Color.GRAY);
+        passwordField.setEchoChar((char) 0);
+        passwordField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                String pass = new String(passwordField.getPassword());
+                if (pass.equals("Mot de passe")) {
+                    passwordField.setText("");
+                    passwordField.setEchoChar('•');
+                    passwordField.setForeground(Color.BLACK);
+                    passwordField.setHorizontalAlignment(SwingConstants.LEADING);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                String pass = new String(passwordField.getPassword());
+                if (pass.isEmpty()) {
+                    passwordField.setText("Mot de passe");
+                    passwordField.setEchoChar((char) 0);
+                    passwordField.setForeground(Color.GRAY);
+                    passwordField.setHorizontalAlignment(SwingConstants.CENTER);
+                }
+            }
+        });
+
+        JButton loginButton = new JButton("Se connecter");
+        loginButton.setFont(new Font("SansSerif", Font.BOLD, 14));
+        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loginButton.addActionListener(e -> handleLogin());
+
+        centerPanel.add(Box.createVerticalGlue());
+        centerPanel.add(usernameField);
+        centerPanel.add(Box.createVerticalStrut(10));
+        centerPanel.add(passwordField);
+        centerPanel.add(Box.createVerticalStrut(20));
+        centerPanel.add(loginButton);
+        centerPanel.add(Box.createVerticalGlue());
+
+        JLabel footer = new JLabel("© Club Cyclistes 2025 - Lombardi Dino", SwingConstants.CENTER);
+        footer.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        footer.setForeground(Color.GRAY);
+        add(footer, BorderLayout.SOUTH);
+    }
+
+    // === LOGIN ===
+    private void handleLogin() {
+        String username = usernameField.getText().trim();
+        String pass = new String(passwordField.getPassword()).trim();
+
+        if (username.isEmpty() || pass.isEmpty()
+                || username.equals("Nom d'utilisateur") || pass.equals("Mot de passe")) {
+            JOptionPane.showMessageDialog(this,
+                    "Veuillez entrer vos identifiants.",
+                    "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (personDAO instanceof PersonDAO personDAOlogin) {
+            Person person = personDAOlogin.login(username, pass);
+
+            if (person == null) {
+                JOptionPane.showMessageDialog(this,
+                        "Nom d'utilisateur ou mot de passe incorrect.",
+                        "Erreur de connexion", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Bienvenue " + person.getFirstname() + " !",
+                        "Connexion réussie", JOptionPane.INFORMATION_MESSAGE);
+                dispose();
+
+                if (person instanceof Member m)
+                    new MemberDashboardFrame(m).setVisible(true);
+                else if (person instanceof Manager mg)
+                    new ManagerDashboardFrame(mg).setVisible(true);
+                else if (person instanceof Treasurer t)
+                    new TreasurerDashboardFrame(t).setVisible(true);
+            }
+        }
+    }
 }

@@ -73,8 +73,6 @@ public abstract class Person {
 	public String toString() {
 		return id + " " + name + " " + firstname + " " + tel + " " + username + " " + password;
 	}
-	
-		
 }
 
 	

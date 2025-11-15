@@ -11,11 +11,11 @@ public class Inscription {
 		return id;
 	}
 	
-	public boolean getisPassenger() {
+	public boolean isPassenger() {
 		return isPassenger;
 	}
 	
-	public boolean isHasBike() {
+	public boolean hasBike() {
 		return hasBike;
 	}
 	
@@ -31,7 +31,7 @@ public class Inscription {
 		this.id = id;
 	}
 	
-	public void setisPassenger(boolean isPassenger) {
+	public void setIsPassenger(boolean isPassenger) {
 		this.isPassenger = isPassenger;
 	}
 	
@@ -45,6 +45,10 @@ public class Inscription {
 	
 	public void setRide(Ride ride) {
 		this.ride = ride;
+	}
+
+	public Inscription() {
+		// Constructeur par défaut
 	}
 
 	public Inscription(int id, boolean ispassenger, boolean hasBike, Member member, Ride ride) {

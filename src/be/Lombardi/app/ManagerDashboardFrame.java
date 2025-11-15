@@ -1,7 +1,5 @@
 package be.Lombardi.app;
 
-import java.awt.EventQueue;
-
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -18,6 +16,11 @@ public class ManagerDashboardFrame extends JFrame {
 	 * Create the frame.
 	 */
 	public ManagerDashboardFrame(Manager manager) {
+		if (manager == null) {
+			 dispose();
+	            new LoginFrame().setVisible(true);
+	            return;
+		}
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();

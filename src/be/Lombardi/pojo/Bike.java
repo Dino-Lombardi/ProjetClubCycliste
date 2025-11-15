@@ -5,8 +5,7 @@ public class Bike {
 	private double weight;
 	private String type;
 	private double length;
-	private Member member;
-	private Vehicle vehicle;
+	private Member owner;
 	
 	public int getId() {
 		return id;
@@ -25,11 +24,7 @@ public class Bike {
 	}
 	
 	public Member getMember() {
-		return member;
-	}
-
-	public Vehicle getVehicle() {
-		return vehicle;
+		return owner;
 	}
 	
 	public void setId(int id) {
@@ -49,20 +44,19 @@ public class Bike {
 	}
 
 	public void setMember(Member member) {
-		this.member = member;
+		this.owner = member;
 	}
 
-	public void setVehicle(Vehicle vehicle) {
-		this.vehicle = vehicle;
+	public Bike() {
+		// Constructeur par défaut
 	}
 	
-	public Bike(int id, double weight, String type, double length, Member member, Vehicle vehicle) {
+	public Bike(int id, double weight, String type, double length, Member member) {
 		this.id = id;
 		this.weight = weight;
 		this.type = type;
 		this.length = length;
-		this.member = member;
-		this.vehicle = vehicle;
+		this.owner = member;
 	}
 
 	

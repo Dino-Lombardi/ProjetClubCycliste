@@ -48,7 +48,6 @@ public class Bike {
 	}
 
 	public Bike() {
-		// Constructeur par défaut
 	}
 	
 	public Bike(int id, double weight, String type, double length, Member member) {
@@ -60,7 +59,10 @@ public class Bike {
 	}
 
 	
-
+	@Override
+	public String toString() {
+	    return type + " (" + weight + "kg)";
+	}
 	
 	
 	

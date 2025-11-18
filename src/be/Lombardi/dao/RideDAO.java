@@ -192,19 +192,18 @@ public class RideDAO extends DAO<Ride>{
         }
     }
 
-    // Méthodes helpers inchangées
     private void loadVehiclesForRides(List<Ride> rides, Map<Integer, Ride> ridesById) {
         if (rides.isEmpty()) return;
 
         final String SQL_VEHICLES = """
             SELECT rv.ride_id, v.vehicle_id, v.seat_number, v.bike_spot_number, v.owner_id,
-                   p.name as owner_name, p.firstname as owner_firstname
+                   p.name as owner_name, p.firstname as owner_firstname, p.tel as owner_tel
             FROM RideVehicles rv
             JOIN Vehicle v ON rv.vehicle_id = v.vehicle_id
             JOIN Person p ON v.owner_id = p.person_id
             WHERE rv.ride_id IN (%s)
             ORDER BY rv.ride_id, v.vehicle_id
-        """;
+            """;
 
         try {
             String placeholders = String.join(",", Collections.nCopies(rides.size(), "?"));
@@ -226,7 +225,8 @@ public class RideDAO extends DAO<Ride>{
                                 rs.getInt("owner_id"),
                                 getSafe(rs, "owner_name"),
                                 getSafe(rs, "owner_firstname"),
-                                "", "", "", 0.0
+                                getSafe(rs, "owner_tel"),
+                                "", "", 0.0
                             );
                             
                             Vehicle vehicle = new Vehicle(
@@ -241,7 +241,6 @@ public class RideDAO extends DAO<Ride>{
                     }
                 }
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur lors du chargement des véhicules", e);
         }

@@ -133,7 +133,8 @@ public class Vehicle {
 
     @Override
     public String toString() {
-        return String.format("Véhicule %d (%s) - %s", id, owner != null ? owner.getFirstname() : "N/A");
+        if (id == 0) return "Sélectionner...";
+        return "Véhicule " + id + " (" + seatNumber + " places)";
     }
     
     @Override

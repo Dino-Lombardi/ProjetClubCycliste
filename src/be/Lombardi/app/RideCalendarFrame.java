@@ -181,6 +181,7 @@ public class RideCalendarFrame extends JFrame {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
+ // Dans la méthode loadRides() - Ligne ~120
     private void loadRides() {
         try {
             Date selectedDate = dateChooser.getDate();
@@ -201,7 +202,6 @@ public class RideCalendarFrame extends JFrame {
                 allRides = rideDAO.findAll();
             }
             
-            // Filtrer par date sélectionnée
             currentRides = allRides.stream()
                 .filter(ride -> ride.getStartDate().toLocalDate().equals(localDate))
                 .collect(Collectors.toList());
@@ -211,8 +211,7 @@ public class RideCalendarFrame extends JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                 "Erreur lors du chargement des sorties: " + e.getMessage(),
-                "Erreur",
-                JOptionPane.ERROR_MESSAGE);
+                "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -252,7 +251,7 @@ public class RideCalendarFrame extends JFrame {
                 String.format("%.2f €", ride.getFee()),
                 ride.getCategory().toString(),
                 getOrganizerInfo(ride),
-                ride.getInscriptions().size() + "/" + ride.getMax_insriptions(),
+                ride.getInscriptions().size() + "/" + ride.getMax_inscriptions(),
                 statut 
             });
         }
@@ -283,9 +282,8 @@ public class RideCalendarFrame extends JFrame {
         }
         
         // Ouvrir la frame pour proposer un véhicule
-        JOptionPane.showMessageDialog(this, "Ouverture de la fenêtre Proposition Véhicule...");
-        // new OfferVehicleFrame(member, ride, rideDAO).setVisible(true);
-        loadRides();
+        new OfferVehicleFrame(member, ride).setVisible(true);
+        dispose();
     }
 
     private void handleReserveSpot() {
@@ -318,9 +316,8 @@ public class RideCalendarFrame extends JFrame {
         }
         
         // Ouvrir la frame pour réserver une place
-        JOptionPane.showMessageDialog(this, "Ouverture de la fenêtre Réservation Place...");
-        // new ReserveSpotFrame(member, ride, rideDAO).setVisible(true);
-        loadRides();
+        new ReserveSpotFrame(member, ride).setVisible(true);
+        dispose();
     }
 
     private void handleViewDetails() {
@@ -383,7 +380,7 @@ public class RideCalendarFrame extends JFrame {
             ride.getAvailablePassengerSpots(),
             ride.getAvailableBikeSpots(),
             ride.getInscriptions().size(),
-            ride.getMax_insriptions(),
+            ride.getMax_inscriptions(),
             ride.getSubscriptionStatusForMember(member)
         );
         

@@ -15,7 +15,7 @@ public class Ride {
 	private CategoryType category;
 	private List<Vehicle> vehicles = new ArrayList<>();
 	private Set<Inscription> inscriptions = new HashSet<>();; 
-	private int max_insriptions;
+	private int max_inscriptions;
 	
 	public int getId() {
 		return id;
@@ -49,8 +49,8 @@ public class Ride {
 		return inscriptions;
 	}
 	
-	public int getMax_insriptions() {
-		return max_insriptions;
+	public int getMax_inscriptions() {
+		return max_inscriptions;
 	}
 	
 	public void setId(int id) {
@@ -85,8 +85,8 @@ public class Ride {
 		this.inscriptions = inscriptions;
 	}
 	
-	public void setMax_insriptions(int max_insriptions) {
-		this.max_insriptions = max_insriptions;
+	public void setMax_inscriptions(int max_inscriptions) {
+		this.max_inscriptions = max_inscriptions;
 	}
 
 	public Ride() {
@@ -99,7 +99,7 @@ public class Ride {
 		this.startDate = startDate;
 		this.fee = fee;
 		this.organizer = organizer;
-		this.max_insriptions = max_inscriptions;
+		this.max_inscriptions = max_inscriptions;
 		this.category = category;
 	}
 
@@ -121,7 +121,7 @@ public class Ride {
     }
     
     public boolean isMaxRegistrationsReached() {
-        return inscriptions.size() >= max_insriptions;
+        return inscriptions.size() >= max_inscriptions;
     }
     
     public boolean hasAvailablePassengerSpots() {

@@ -27,12 +27,12 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import be.Lombardi.dao.DAO;
+import be.Lombardi.dao.DAOException;
 import be.Lombardi.dao.RideDAO;
 import be.Lombardi.daofactory.AbstractDAOFactory;
 import be.Lombardi.pojo.Member;
 import be.Lombardi.pojo.Ride;
 import com.toedter.calendar.JDateChooser;
-
 
 public class RideCalendarFrame extends JFrame {
     private static final long serialVersionUID = 1L;
@@ -42,19 +42,20 @@ public class RideCalendarFrame extends JFrame {
     private JCheckBox showOnlyMyCategoriesCheckbox;
     private JTable rideTable;
     private List<Ride> currentRides = new ArrayList<>();
-    private boolean firstLoad = true; // Pour éviter le message au premier chargement
+    private boolean firstLoad = true;
 
     public RideCalendarFrame(Member member) {
-    	DAO<Ride> dao = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY).getRideDAO();
+        DAO<Ride> dao = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY).getRideDAO();
         this.rideDAO = (RideDAO) dao;
         this.member = member;
+        
         if (member == null) {
-			 dispose();
-	            new LoginFrame().setVisible(true);
-	            return;
-		}
+            dispose();
+            new LoginFrame().setVisible(true);
+            return;
+        }
+        
         initUI();
-        // On ne charge pas automatiquement au démarrage
     }
 
     private void initUI() {
@@ -63,11 +64,9 @@ public class RideCalendarFrame extends JFrame {
         setSize(1100, 600);
         setLocationRelativeTo(null);
 
-        // Layout principal
         setLayout(new BorderLayout(10, 10));
         ((JComponent) getContentPane()).setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Panel de contrôle
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         
         controlPanel.add(new JLabel("Date:"));
@@ -75,7 +74,6 @@ public class RideCalendarFrame extends JFrame {
         dateChooser.setDateFormatString("dd/MM/yyyy");
         dateChooser.setDate(new Date());
         dateChooser.getJCalendar().setMinSelectableDate(new Date());
-        // On retire le chargement automatique au changement de date
         controlPanel.add(dateChooser);
 
         showOnlyMyCategoriesCheckbox = new JCheckBox("Uniquement mes catégories", true);
@@ -90,7 +88,6 @@ public class RideCalendarFrame extends JFrame {
 
         add(controlPanel, BorderLayout.NORTH);
 
-        // Tableau des sorties avec message initial
         String[] columnNames = {
             "ID", "Lieu", "Date", "Heure", "Forfait", "Catégorie", 
             "Organisateur", "Inscriptions", "Statut"
@@ -103,7 +100,6 @@ public class RideCalendarFrame extends JFrame {
             }
         };
         
-        // Ajouter une ligne d'information initiale
         model.addRow(new Object[]{
             "", "Sélectionnez une date et cliquez sur 'Rechercher'", "", "", "", "", "", "", ""
         });
@@ -114,38 +110,34 @@ public class RideCalendarFrame extends JFrame {
         rideTable.getTableHeader().setReorderingAllowed(false);
         rideTable.setRowHeight(25);
 
-        // Configuration des colonnes
-        rideTable.getColumnModel().getColumn(0).setPreferredWidth(40);   // ID
-        rideTable.getColumnModel().getColumn(1).setPreferredWidth(150);  // Lieu
-        rideTable.getColumnModel().getColumn(2).setPreferredWidth(90);   // Date
-        rideTable.getColumnModel().getColumn(3).setPreferredWidth(60);   // Heure
-        rideTable.getColumnModel().getColumn(4).setPreferredWidth(70);   // Forfait
-        rideTable.getColumnModel().getColumn(5).setPreferredWidth(100);  // Catégorie
-        rideTable.getColumnModel().getColumn(6).setPreferredWidth(150);  // Organisateur
-        rideTable.getColumnModel().getColumn(7).setPreferredWidth(100);  // Inscriptions
-        rideTable.getColumnModel().getColumn(8).setPreferredWidth(120);  // Statut
+        rideTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+        rideTable.getColumnModel().getColumn(1).setPreferredWidth(150);
+        rideTable.getColumnModel().getColumn(2).setPreferredWidth(90);
+        rideTable.getColumnModel().getColumn(3).setPreferredWidth(60);
+        rideTable.getColumnModel().getColumn(4).setPreferredWidth(70);
+        rideTable.getColumnModel().getColumn(5).setPreferredWidth(100);
+        rideTable.getColumnModel().getColumn(6).setPreferredWidth(150);
+        rideTable.getColumnModel().getColumn(7).setPreferredWidth(100);
+        rideTable.getColumnModel().getColumn(8).setPreferredWidth(120);
 
-        // Coloration simple sans Renderer complexe
         rideTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                     boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 
-                // Éviter de colorer la ligne d'information initiale
                 if (currentRides != null && row < currentRides.size()) {
                     Ride ride = currentRides.get(row);
                     
-                    // Vérifier le statut réel pour la coloration
                     if (ride.isDatePassed()) {
-                        c.setBackground(new Color(255, 230, 230)); // Rouge clair pour dates passées
+                        c.setBackground(new Color(255, 230, 230));
                     } else if (ride.isMemberAlreadyRegistered(member)) {
-                        c.setBackground(new Color(230, 240, 255)); // Bleu clair pour déjà inscrit
+                        c.setBackground(new Color(230, 240, 255));
                     } else if (ride.isMaxRegistrationsReached()) {
-                        c.setBackground(new Color(255, 240, 230)); // Orange pour complet
+                        c.setBackground(new Color(255, 240, 230));
                     } else {
                         if (!isSelected) {
-                            c.setBackground(new Color(230, 255, 230)); // Vert clair pour disponible
+                            c.setBackground(new Color(230, 255, 230));
                         }
                     }
                 }
@@ -156,7 +148,6 @@ public class RideCalendarFrame extends JFrame {
 
         add(new JScrollPane(rideTable), BorderLayout.CENTER);
 
-        // Panel des boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
         JButton btnOfferAvailability = new JButton("Proposer mes disponibilités");
@@ -181,7 +172,6 @@ public class RideCalendarFrame extends JFrame {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
- // Dans la méthode loadRides() - Ligne ~120
     private void loadRides() {
         try {
             Date selectedDate = dateChooser.getDate();
@@ -208,16 +198,22 @@ public class RideCalendarFrame extends JFrame {
             
             updateTable();
             
+        } catch (DAOException e) {
+            JOptionPane.showMessageDialog(this,
+                e.getUserMessage(),
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Erreur lors du chargement des sorties: " + e.getMessage(),
-                "Erreur", JOptionPane.ERROR_MESSAGE);
+                "Une erreur inattendue est survenue.",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void updateTable() {
         DefaultTableModel model = (DefaultTableModel) rideTable.getModel();
-        model.setRowCount(0); // Vider le tableau
+        model.setRowCount(0);
         
         if (currentRides.isEmpty()) {
             if (!firstLoad) {
@@ -229,7 +225,6 @@ public class RideCalendarFrame extends JFrame {
                     "Information",
                     JOptionPane.INFORMATION_MESSAGE);
             } else {
-                // Premier chargement - message d'information
                 model.addRow(new Object[]{
                     "", "Sélectionnez une date et cliquez sur 'Rechercher'", "", "", "", "", "", "", ""
                 });
@@ -251,7 +246,7 @@ public class RideCalendarFrame extends JFrame {
                 String.format("%.2f €", ride.getFee()),
                 ride.getCategory().toString(),
                 getOrganizerInfo(ride),
-                ride.getInscriptions().size() + "/" + ride.getMax_inscriptions(),
+                ride.getInscriptions().size() + "/" + ride.getMaxInscriptions(),
                 statut 
             });
         }
@@ -281,7 +276,6 @@ public class RideCalendarFrame extends JFrame {
             return;
         }
         
-        // Ouvrir la frame pour proposer un véhicule
         new OfferVehicleFrame(member, ride).setVisible(true);
         dispose();
     }
@@ -315,7 +309,6 @@ public class RideCalendarFrame extends JFrame {
             return;
         }
         
-        // Ouvrir la frame pour réserver une place
         new ReserveSpotFrame(member, ride).setVisible(true);
         dispose();
     }
@@ -380,7 +373,7 @@ public class RideCalendarFrame extends JFrame {
             ride.getAvailablePassengerSpots(),
             ride.getAvailableBikeSpots(),
             ride.getInscriptions().size(),
-            ride.getMax_inscriptions(),
+            ride.getMaxInscriptions(),
             ride.getSubscriptionStatusForMember(member)
         );
         

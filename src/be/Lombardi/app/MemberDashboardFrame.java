@@ -1,6 +1,5 @@
 package be.Lombardi.app;
 
-import be.Lombardi.pojo.CategoryType;
 import be.Lombardi.pojo.Member;
 
 import javax.swing.BorderFactory;
@@ -13,13 +12,14 @@ import javax.swing.JLabel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class MemberDashboardFrame extends JFrame {
 
@@ -48,7 +48,6 @@ public class MemberDashboardFrame extends JFrame {
         getContentPane().setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(Color.WHITE);
 
-        // HEADER simple
         JPanel headerPanel = new JPanel();
         headerPanel.setBackground(new Color(70, 130, 180));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
@@ -60,13 +59,11 @@ public class MemberDashboardFrame extends JFrame {
         
         getContentPane().add(headerPanel, BorderLayout.NORTH);
 
-        // PANEL CENTRAL avec informations et boutons
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         centerPanel.setBackground(Color.WHITE);
 
-        // Panel informations membre
         JPanel infoPanel = new JPanel(new GridLayout(2, 1, 5, 5));
         infoPanel.setBorder(BorderFactory.createTitledBorder("Mes informations"));
         infoPanel.setBackground(Color.WHITE);
@@ -83,14 +80,12 @@ public class MemberDashboardFrame extends JFrame {
         centerPanel.add(infoPanel);
         centerPanel.add(Box.createVerticalStrut(30));
 
-        // Panel des boutons d'action
         JLabel actionsLabel = new JLabel("Actions disponibles :");
         actionsLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         actionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         centerPanel.add(actionsLabel);
         centerPanel.add(Box.createVerticalStrut(20));
 
-        // Bouton principal : Calendrier des sorties
         JButton btnCalendar = new JButton("📅 Calendrier des Sorties");
         btnCalendar.setFont(new Font("SansSerif", Font.BOLD, 14));
         btnCalendar.setBackground(new Color(70, 130, 180));
@@ -105,7 +100,6 @@ public class MemberDashboardFrame extends JFrame {
         centerPanel.add(btnCalendar);
         centerPanel.add(Box.createVerticalStrut(15));
 
-        // Bouton secondaire : Mes inscriptions
         JButton btnMyRegistrations = new JButton("Mes inscriptions");
         btnMyRegistrations.setFont(new Font("SansSerif", Font.PLAIN, 14));
         btnMyRegistrations.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -119,7 +113,6 @@ public class MemberDashboardFrame extends JFrame {
         centerPanel.add(btnMyRegistrations);
         centerPanel.add(Box.createVerticalStrut(10));
 
-        // Bouton secondaire : Mon profil
         JButton btnMyProfile = new JButton("Mon profil");
         btnMyProfile.setFont(new Font("SansSerif", Font.PLAIN, 14));
         btnMyProfile.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -130,7 +123,6 @@ public class MemberDashboardFrame extends JFrame {
         centerPanel.add(btnMyProfile);
         centerPanel.add(Box.createVerticalStrut(10));
 
-        // Bouton secondaire : Mes véhicules
         JButton btnMyVehicles = new JButton("Mes véhicules");
         btnMyVehicles.setFont(new Font("SansSerif", Font.PLAIN, 14));
         btnMyVehicles.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -146,7 +138,6 @@ public class MemberDashboardFrame extends JFrame {
         centerPanel.add(Box.createVerticalGlue());
         getContentPane().add(centerPanel, BorderLayout.CENTER);
 
-        // FOOTER simple
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         footerPanel.setBackground(Color.WHITE);
         footerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));

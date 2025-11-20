@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,49 +19,127 @@ import be.Lombardi.pojo.Member;
 import be.Lombardi.pojo.Ride;
 import be.Lombardi.pojo.Vehicle;
 
-public class RideDAO extends DAO<Ride>{
-	
-	public RideDAO(Connection conn) {
-		super(conn);
-		// TODO Auto-generated constructor stub
-	}
+public class RideDAO extends DAO<Ride> {
 
-	@Override
-	public boolean create(Ride obj) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    public RideDAO(Connection conn) {
+        super(conn);
+    }
 
-	@Override
-	public boolean delete(Ride obj) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public boolean create(Ride ride) {
+        final String SQL = """
+            INSERT INTO Ride (start_place, start_date, fee, category, max_inscriptions, manager_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """;
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setString(1, ride.getStartPlace());
+            ps.setTimestamp(2, Timestamp.valueOf(ride.getStartDate()));
+            ps.setDouble(3, ride.getFee());
+            ps.setString(4, ride.getCategory().toString());
+            ps.setInt(5, ride.getMaxInscriptions());
+            ps.setInt(6, ride.getOrganizer().getId());
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la création de la sortie", e);
+        }
+    }
 
-	@Override
-	public boolean update(Ride obj) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public boolean delete(Ride ride) {
+        final String SQL = "DELETE FROM Ride WHERE ride_id = ?";
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setInt(1, ride.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la suppression de la sortie", e);
+        }
+    }
 
-	@Override
-	public Ride find(int id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public boolean update(Ride ride) {
+        final String SQL = """
+            UPDATE Ride
+            SET start_place = ?, start_date = ?, fee = ?, category = ?, max_inscriptions = ?, manager_id = ?
+            WHERE ride_id = ?
+            """;
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setString(1, ride.getStartPlace());
+            ps.setTimestamp(2, Timestamp.valueOf(ride.getStartDate()));
+            ps.setDouble(3, ride.getFee());
+            ps.setString(4, ride.getCategory().toString());
+            ps.setInt(5, ride.getMaxInscriptions());
+            ps.setInt(6, ride.getOrganizer().getId());
+            ps.setInt(7, ride.getId());
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la mise à jour de la sortie", e);
+        }
+    }
 
-	
-	public List<Ride> findAll() {
+    @Override
+    public Ride find(int id) {
+        final String SQL = """
+            SELECT r.ride_id, r.start_place, r.start_date, r.fee, r.category, r.max_inscriptions, r.manager_id,
+                   m.person_id as manager_person_id, p.name as manager_name, p.firstname as manager_firstname,
+                   p.tel as manager_tel, p.username as manager_username,
+                   m.category as manager_category
+            FROM Ride r
+            LEFT JOIN Manager m ON r.manager_id = m.person_id
+            LEFT JOIN Person p ON m.person_id = p.person_id
+            WHERE r.ride_id = ?
+            """;
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setInt(1, id);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Manager manager = null;
+                    if (rs.getInt("manager_person_id") != 0) {
+                        manager = new Manager(
+                            rs.getInt("manager_person_id"),
+                            getSafe(rs, "manager_name"),
+                            getSafe(rs, "manager_firstname"),
+                            getSafe(rs, "manager_tel"),
+                            getSafe(rs, "manager_username"),
+                            CategoryType.valueOf(getSafe(rs, "manager_category").toUpperCase())
+                        );
+                    }
+                    
+                    return new Ride(
+                        rs.getInt("ride_id"),
+                        getSafe(rs, "start_place"),
+                        rs.getTimestamp("start_date").toLocalDateTime(),
+                        rs.getDouble("fee"),
+                        manager,
+                        rs.getInt("max_inscriptions"),
+                        CategoryType.valueOf(getSafe(rs, "category").toUpperCase())
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la recherche de la sortie", e);
+        }
+        
+        return null;
+    }
+
+    public List<Ride> findAll() {
         final String SQL_RIDES = """
             SELECT r.ride_id, r.start_place, r.start_date, r.fee, r.category, r.max_inscriptions, r.manager_id,
                    m.person_id as manager_person_id, p.name as manager_name, p.firstname as manager_firstname,
-                   p.tel as manager_tel, p.username as manager_username, p.password as manager_password,
+                   p.tel as manager_tel, p.username as manager_username,
                    m.category as manager_category
             FROM Ride r
             LEFT JOIN Manager m ON r.manager_id = m.person_id
             LEFT JOIN Person p ON m.person_id = p.person_id
             ORDER BY r.start_date DESC
-        """;
+            """;
 
         try {
             List<Ride> rides = new ArrayList<>();
@@ -69,7 +148,6 @@ public class RideDAO extends DAO<Ride>{
             try (PreparedStatement st = connect.prepareStatement(SQL_RIDES)) {
                 try (ResultSet rs = st.executeQuery()) {
                     while (rs.next()) {
-                        // Créer le Manager si présent
                         Manager manager = null;
                         if (rs.getInt("manager_person_id") != 0) {
                             manager = new Manager(
@@ -78,7 +156,6 @@ public class RideDAO extends DAO<Ride>{
                                 getSafe(rs, "manager_firstname"),
                                 getSafe(rs, "manager_tel"),
                                 getSafe(rs, "manager_username"),
-                                getSafe(rs, "manager_password"),
                                 CategoryType.valueOf(getSafe(rs, "manager_category").toUpperCase())
                             );
                         }
@@ -88,7 +165,7 @@ public class RideDAO extends DAO<Ride>{
                             getSafe(rs, "start_place"),
                             rs.getTimestamp("start_date").toLocalDateTime(),
                             rs.getDouble("fee"),
-                            manager,  // Manager chargé directement
+                            manager,
                             rs.getInt("max_inscriptions"),
                             CategoryType.valueOf(getSafe(rs, "category").toUpperCase())
                         );
@@ -103,18 +180,16 @@ public class RideDAO extends DAO<Ride>{
                 return rides;
             }
 
-            // Charger seulement les véhicules et inscriptions
             loadVehiclesForRides(rides, ridesById);
             loadInscriptionsForRides(rides, ridesById);
 
             return rides;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur RideDAO.findAll()", e);
+            throw new DAOException("Erreur lors de la récupération de toutes les sorties", e);
         }
     }
 
-    // Méthode 2: Rides selon catégories avec Manager
     public List<Ride> findByMemberCategories(Set<CategoryType> memberCategories) {
         if (memberCategories == null || memberCategories.isEmpty()) {
             return new ArrayList<>();
@@ -123,14 +198,14 @@ public class RideDAO extends DAO<Ride>{
         final String SQL_RIDES = """
             SELECT r.ride_id, r.start_place, r.start_date, r.fee, r.category, r.max_inscriptions, r.manager_id,
                    m.person_id as manager_person_id, p.name as manager_name, p.firstname as manager_firstname,
-                   p.tel as manager_tel, p.username as manager_username, p.password as manager_password,
+                   p.tel as manager_tel, p.username as manager_username,
                    m.category as manager_category
             FROM Ride r
             LEFT JOIN Manager m ON r.manager_id = m.person_id
             LEFT JOIN Person p ON m.person_id = p.person_id
             WHERE r.category IN (%s)
             ORDER BY r.start_date DESC
-        """;
+            """;
 
         try {
             List<Ride> rides = new ArrayList<>();
@@ -147,7 +222,6 @@ public class RideDAO extends DAO<Ride>{
                 
                 try (ResultSet rs = st.executeQuery()) {
                     while (rs.next()) {
-                        // Créer le Manager si présent
                         Manager manager = null;
                         if (rs.getInt("manager_person_id") != 0) {
                             manager = new Manager(
@@ -156,7 +230,6 @@ public class RideDAO extends DAO<Ride>{
                                 getSafe(rs, "manager_firstname"),
                                 getSafe(rs, "manager_tel"),
                                 getSafe(rs, "manager_username"),
-                                getSafe(rs, "manager_password"),
                                 CategoryType.valueOf(getSafe(rs, "manager_category").toUpperCase())
                             );
                         }
@@ -166,7 +239,7 @@ public class RideDAO extends DAO<Ride>{
                             getSafe(rs, "start_place"),
                             rs.getTimestamp("start_date").toLocalDateTime(),
                             rs.getDouble("fee"),
-                            manager,  // Manager chargé directement
+                            manager,
                             rs.getInt("max_inscriptions"),
                             CategoryType.valueOf(getSafe(rs, "category").toUpperCase())
                         );
@@ -181,14 +254,13 @@ public class RideDAO extends DAO<Ride>{
                 return rides;
             }
 
-            // Charger seulement les véhicules et inscriptions
             loadVehiclesForRides(rides, ridesById);
             loadInscriptionsForRides(rides, ridesById);
 
             return rides;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur RideDAO.findByMemberCategories()", e);
+            throw new DAOException("Erreur lors de la récupération des sorties par catégories", e);
         }
     }
 
@@ -196,13 +268,16 @@ public class RideDAO extends DAO<Ride>{
         if (rides.isEmpty()) return;
 
         final String SQL_VEHICLES = """
-            SELECT rv.ride_id, v.vehicle_id, v.seat_number, v.bike_spot_number, v.owner_id,
-                   p.name as owner_name, p.firstname as owner_firstname, p.tel as owner_tel
-            FROM RideVehicles rv
-            JOIN Vehicle v ON rv.vehicle_id = v.vehicle_id
-            JOIN Person p ON v.owner_id = p.person_id
-            WHERE rv.ride_id IN (%s)
-            ORDER BY rv.ride_id, v.vehicle_id
+            SELECT DISTINCT i.ride_id, v.vehicle_id, v.seat_number, v.bike_spot_number, v.owner_id,
+                   p.name as owner_name, p.firstname as owner_firstname, p.tel as owner_tel,
+                   p.username as owner_username, m.balance as owner_balance
+            FROM Inscription i
+            JOIN Vehicle v ON i.vehicle_id = v.vehicle_id
+            JOIN Member m ON v.owner_id = m.person_id
+            JOIN Person p ON m.person_id = p.person_id
+            WHERE i.ride_id IN (%s)
+            AND i.vehicle_id IS NOT NULL
+            ORDER BY i.ride_id, v.vehicle_id
             """;
 
         try {
@@ -226,7 +301,8 @@ public class RideDAO extends DAO<Ride>{
                                 getSafe(rs, "owner_name"),
                                 getSafe(rs, "owner_firstname"),
                                 getSafe(rs, "owner_tel"),
-                                "", "", 0.0
+                                getSafe(rs, "owner_username"),
+                                rs.getDouble("owner_balance")
                             );
                             
                             Vehicle vehicle = new Vehicle(
@@ -236,13 +312,15 @@ public class RideDAO extends DAO<Ride>{
                                 owner
                             );
                             
-                            ride.getVehicles().add(vehicle);
+                            if (!ride.getVehicles().contains(vehicle)) {
+                                ride.getVehicles().add(vehicle);
+                            }
                         }
                     }
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors du chargement des véhicules", e);
+            throw new DAOException("Erreur lors du chargement des véhicules", e);
         }
     }
 
@@ -256,7 +334,7 @@ public class RideDAO extends DAO<Ride>{
             JOIN Person p ON i.member_id = p.person_id
             WHERE i.ride_id IN (%s)
             ORDER BY i.ride_id, i.inscription_id
-        """;
+            """;
 
         try {
             String placeholders = String.join(",", Collections.nCopies(rides.size(), "?"));
@@ -278,7 +356,7 @@ public class RideDAO extends DAO<Ride>{
                                 rs.getInt("member_id"),
                                 getSafe(rs, "member_name"),
                                 getSafe(rs, "member_firstname"),
-                                "", "", "", 0.0
+                                "", "", 0.0
                             );
                             
                             Inscription inscription = new Inscription(
@@ -296,11 +374,10 @@ public class RideDAO extends DAO<Ride>{
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors du chargement des inscriptions", e);
+            throw new DAOException("Erreur lors du chargement des inscriptions", e);
         }
     }
 
-    /** Utilitaire pour éviter les NPE sur les colonnes texte */
     private String getSafe(ResultSet rs, String col) {
         try {
             String v = rs.getString(col);

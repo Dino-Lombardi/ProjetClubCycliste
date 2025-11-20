@@ -6,5 +6,3 @@ public enum CategoryType {
 	VTT_TRIALISTE,
 	CYCLO
 }
-
-

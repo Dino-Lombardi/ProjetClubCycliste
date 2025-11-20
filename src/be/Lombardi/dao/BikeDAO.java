@@ -17,120 +17,96 @@ public class BikeDAO extends DAO<Bike> {
     }
 
     @Override
-    public boolean create(Bike obj) {
-        final String SQL_INSERT = """
-            INSERT INTO Bike (weight, type, length, owner_id)
-            VALUES (?, ?, ?, ?)
-            """;
+    public boolean create(Bike bike) {
+        final String SQL = "INSERT INTO Bike (weight, type, length, owner_id) VALUES (?, ?, ?, ?)";
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL_INSERT)) {
-            ps.setDouble(1, obj.getWeight());
-            ps.setString(2, obj.getType());
-            ps.setDouble(3, obj.getLength());
-            ps.setInt(4, obj.getMember().getId());
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setDouble(1, bike.getWeight());
+            ps.setString(2, bike.getType());
+            ps.setDouble(3, bike.getLength());
+            ps.setInt(4, bike.getOwner().getId());
             
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new DAOException("Erreur lors de la création du vélo", e);
         }
     }
 
     @Override
-    public boolean delete(Bike obj) {
-        final String SQL_DELETE = "DELETE FROM Bike WHERE bike_id = ?";
+    public boolean delete(Bike bike) {
+        final String SQL = "DELETE FROM Bike WHERE bike_id = ?";
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL_DELETE)) {
-            ps.setInt(1, obj.getId());
-            
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setInt(1, bike.getId());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new DAOException("Erreur lors de la suppression du vélo", e);
         }
     }
 
     @Override
-    public boolean update(Bike obj) {
-        final String SQL_UPDATE = """
-            UPDATE Bike 
-            SET weight = ?, type = ?, length = ?, owner_id = ?
-            WHERE bike_id = ?
-            """;
+    public boolean update(Bike bike) {
+        final String SQL = "UPDATE Bike SET weight = ?, type = ?, length = ?, owner_id = ? WHERE bike_id = ?";
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL_UPDATE)) {
-            ps.setDouble(1, obj.getWeight());
-            ps.setString(2, obj.getType());
-            ps.setDouble(3, obj.getLength());
-            ps.setInt(4, obj.getMember().getId());
-            ps.setInt(5, obj.getId());
-            
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setDouble(1, bike.getWeight());
+            ps.setString(2, bike.getType());
+            ps.setDouble(3, bike.getLength());
+            ps.setInt(4, bike.getOwner().getId());
+            ps.setInt(5, bike.getId());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new DAOException("Erreur lors de la mise à jour du vélo", e);
         }
     }
 
     @Override
     public Bike find(int id) {
-        final String SQL_FIND = """
+        final String SQL = """
             SELECT b.bike_id, b.weight, b.type, b.length, b.owner_id,
-                   p.name, p.firstname
+                   p.name, p.firstname, p.tel, p.username,
+                   m.balance
             FROM Bike b
-            JOIN Person p ON b.owner_id = p.person_id
+            JOIN Member m ON b.owner_id = m.person_id
+            JOIN Person p ON m.person_id = p.person_id
             WHERE b.bike_id = ?
             """;
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL_FIND)) {
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setInt(1, id);
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    // Créer le propriétaire (Member)
                     Member owner = new Member(
                         rs.getInt("owner_id"),
                         rs.getString("name"),
                         rs.getString("firstname"),
-                        "", "", "", 0.0  // infos minimales
+                        rs.getString("tel"),
+                        rs.getString("username"),
+                        rs.getDouble("balance")
                     );
                     
-                    // Créer le vélo
-                    Bike bike = new Bike(
+                    return new Bike(
                         rs.getInt("bike_id"),
                         rs.getDouble("weight"),
                         rs.getString("type"),
                         rs.getDouble("length"),
                         owner
                     );
-                    
-                    return bike;
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Erreur lors de la recherche du vélo", e);
         }
         
         return null;
     }
 
-    /**
-     * Trouve tous les vélos d'un membre
-     */
     public List<Bike> findByMember(Member member) {
-        final String SQL_FIND_BY_MEMBER = """
-            SELECT bike_id, weight, type, length
-            FROM Bike
-            WHERE owner_id = ?
-            ORDER BY type
-            """;
-        
+        final String SQL = "SELECT bike_id, weight, type, length FROM Bike WHERE owner_id = ? ORDER BY type";
         List<Bike> bikes = new ArrayList<>();
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL_FIND_BY_MEMBER)) {
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setInt(1, member.getId());
             
             try (ResultSet rs = ps.executeQuery()) {
@@ -146,17 +122,9 @@ public class BikeDAO extends DAO<Bike> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new DAOException("Erreur lors de la recherche des vélos", e);
         }
         
         return bikes;
-    }
-
-    /**
-     * Trouve un vélo disponible pour un membre (premier trouvé)
-     */
-    public Bike findAvailableBikeForMember(Member member) {
-        List<Bike> memberBikes = findByMember(member);
-        return memberBikes.isEmpty() ? null : memberBikes.get(0);
     }
 }

@@ -5,10 +5,10 @@ import be.Lombardi.daofactory.AbstractDAOFactory;
 import be.Lombardi.pojo.*;
 import javax.swing.*;
 import java.awt.*;
-import java.sql.SQLException;
 import java.util.List;
 
 public class OfferVehicleFrame extends JFrame {
+    private static final long serialVersionUID = 1576035414817952298L;
     private Member member;
     private Ride ride;
     private VehicleDAO vehicleDAO;
@@ -82,18 +82,30 @@ public class OfferVehicleFrame extends JFrame {
     }
 
     private void loadMemberData() {
-        List<Vehicle> vehicles = vehicleDAO.findByMember(member);
-        vehicleCombo.removeAllItems();
-        vehicleCombo.addItem(new Vehicle());
-        for (Vehicle vehicle : vehicles) {
-            vehicleCombo.addItem(vehicle);
-        }
+        try {
+            List<Vehicle> vehicles = vehicleDAO.findByMember(member);
+            vehicleCombo.removeAllItems();
+            vehicleCombo.addItem(new Vehicle());
+            for (Vehicle vehicle : vehicles) {
+                vehicleCombo.addItem(vehicle);
+            }
 
-        List<Bike> bikes = bikeDAO.findByMember(member);
-        bikeCombo.removeAllItems();
-        bikeCombo.addItem(new Bike());
-        for (Bike bike : bikes) {
-            bikeCombo.addItem(bike);
+            List<Bike> bikes = bikeDAO.findByMember(member);
+            bikeCombo.removeAllItems();
+            bikeCombo.addItem(new Bike());
+            for (Bike bike : bikes) {
+                bikeCombo.addItem(bike);
+            }
+        } catch (DAOException e) {
+            JOptionPane.showMessageDialog(this, 
+                e.getUserMessage(),
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Une erreur inattendue est survenue.",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -117,13 +129,26 @@ public class OfferVehicleFrame extends JFrame {
                 Vehicle newVehicle = new Vehicle(0, seats, bikeSpots, member);
                 if (vehicleDAO.create(newVehicle)) {
                     loadMemberData();
-                    vehicleCombo.setSelectedItem(newVehicle);
+                    
+                    List<Vehicle> vehicles = vehicleDAO.findByMember(member);
+                    if (!vehicles.isEmpty()) {
+                        vehicleCombo.setSelectedItem(vehicles.get(vehicles.size() - 1));
+                    }
+                    
                     JOptionPane.showMessageDialog(this, "Véhicule créé avec succès!");
                 }
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Veuillez entrer des nombres valides");
+            } catch (DAOException ex) {
+                JOptionPane.showMessageDialog(this, 
+                    ex.getUserMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Erreur lors de la création du véhicule");
+                JOptionPane.showMessageDialog(this,
+                    "Une erreur inattendue est survenue.",
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -152,13 +177,26 @@ public class OfferVehicleFrame extends JFrame {
                 Bike newBike = new Bike(0, weight, type, length, member);
                 if (bikeDAO.create(newBike)) {
                     loadMemberData();
-                    bikeCombo.setSelectedItem(newBike);
+                    
+                    List<Bike> bikes = bikeDAO.findByMember(member);
+                    if (!bikes.isEmpty()) {
+                        bikeCombo.setSelectedItem(bikes.get(bikes.size() - 1));
+                    }
+                    
                     JOptionPane.showMessageDialog(this, "Vélo créé avec succès!");
                 }
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Veuillez entrer des valeurs valides");
+            } catch (DAOException ex) {
+                JOptionPane.showMessageDialog(this, 
+                    ex.getUserMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Erreur lors de la création du vélo");
+                JOptionPane.showMessageDialog(this,
+                    "Une erreur inattendue est survenue.",
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -173,21 +211,13 @@ public class OfferVehicleFrame extends JFrame {
         }
 
         try {
-            // 🔄 LOGIQUE MÉTIER DANS LA FRAME - Appels DAO simples
-            if (!vehicleDAO.linkVehicleToRide(selectedVehicle, ride)) {
-                JOptionPane.showMessageDialog(this, "Erreur lors de la liaison du véhicule");
-                return;
-            }
-
-            if (selectedBike != null && selectedBike.getId() != 0) {
-                if (!vehicleDAO.addBikeToRideVehicle(ride, selectedVehicle, selectedBike)) {
-                    JOptionPane.showMessageDialog(this, "Erreur lors de la liaison du vélo");
-                    return;
-                }
-            }
-
             boolean hasBike = selectedBike != null && selectedBike.getId() != 0;
             Inscription inscription = new Inscription(0, false, hasBike, member, ride);
+            inscription.setVehicle(selectedVehicle);
+            
+            if (hasBike) {
+                inscription.setBike(selectedBike);
+            }
             
             if (!inscriptionDAO.create(inscription)) {
                 JOptionPane.showMessageDialog(this, "Erreur lors de la création de l'inscription");
@@ -198,8 +228,16 @@ public class OfferVehicleFrame extends JFrame {
             dispose();
             new MemberDashboardFrame(member).setVisible(true);
 
+        } catch (DAOException e) {
+            JOptionPane.showMessageDialog(this, 
+                e.getUserMessage(),
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Une erreur inattendue est survenue.");
+            JOptionPane.showMessageDialog(this,
+                "Une erreur inattendue est survenue.",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 }

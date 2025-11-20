@@ -20,6 +20,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+
+import be.Lombardi.dao.DAOException;
 import be.Lombardi.daofactory.AbstractDAOFactory;
 import be.Lombardi.pojo.Manager;
 import be.Lombardi.pojo.Member;
@@ -27,7 +29,6 @@ import be.Lombardi.pojo.Person;
 import be.Lombardi.pojo.Treasurer;
 import be.Lombardi.dao.DAO;
 import be.Lombardi.dao.PersonDAO;
-
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -40,7 +41,6 @@ public class LoginFrame extends JFrame {
     private final AbstractDAOFactory adf = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
     private final DAO<Person> personDAO = adf.getPersonDAO();
 
-    // === MAIN ===
     public static void main(String[] args) {
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -56,7 +56,6 @@ public class LoginFrame extends JFrame {
         EventQueue.invokeLater(() -> new LoginFrame().setVisible(true));
     }
 
-    // === CONSTRUCTEUR ===
     public LoginFrame() {
         setTitle("Connexion - Club Cyclistes");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -68,7 +67,6 @@ public class LoginFrame extends JFrame {
         initUI();
     }
 
-    // === INTERFACE ===
     private void initUI() {
         setLayout(new BorderLayout(0, 15));
         ((JComponent) getContentPane()).setBorder(new EmptyBorder(20, 40, 20, 40));
@@ -156,7 +154,6 @@ public class LoginFrame extends JFrame {
         add(footer, BorderLayout.SOUTH);
     }
 
-    // === LOGIN ===
     private void handleLogin() {
         String username = usernameField.getText().trim();
         String pass = new String(passwordField.getPassword()).trim();
@@ -169,26 +166,38 @@ public class LoginFrame extends JFrame {
             return;
         }
 
-        if (personDAO instanceof PersonDAO personDAOlogin) {
-            Person person = personDAOlogin.login(username, pass);
+        try {
+            if (personDAO instanceof PersonDAO personDAOlogin) {
+                Person person = personDAOlogin.login(username, pass);
 
-            if (person == null) {
-                JOptionPane.showMessageDialog(this,
-                        "Nom d'utilisateur ou mot de passe incorrect.",
-                        "Erreur de connexion", JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "Bienvenue " + person.getFirstname() + " !",
-                        "Connexion réussie", JOptionPane.INFORMATION_MESSAGE);
-                dispose();
+                if (person == null) {
+                    JOptionPane.showMessageDialog(this,
+                            "Nom d'utilisateur ou mot de passe incorrect.",
+                            "Erreur de connexion", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Bienvenue " + person.getFirstname() + " !",
+                            "Connexion réussie", JOptionPane.INFORMATION_MESSAGE);
+                    dispose();
 
-                if (person instanceof Member m)
-                    new MemberDashboardFrame(m).setVisible(true);
-                else if (person instanceof Manager mg)
-                    new ManagerDashboardFrame(mg).setVisible(true);
-                else if (person instanceof Treasurer t)
-                    new TreasurerDashboardFrame(t).setVisible(true);
+                    if (person instanceof Member m)
+                        new MemberDashboardFrame(m).setVisible(true);
+                    else if (person instanceof Manager mg)
+                        new ManagerDashboardFrame(mg).setVisible(true);
+                    else if (person instanceof Treasurer t)
+                        new TreasurerDashboardFrame(t).setVisible(true);
+                }
             }
+        } catch (DAOException e) {
+            JOptionPane.showMessageDialog(this,
+                    e.getUserMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Une erreur inattendue est survenue.",
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }

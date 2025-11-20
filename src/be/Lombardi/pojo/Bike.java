@@ -17,6 +17,24 @@ public class Bike {
         this.owner = owner;
     }
 
+    public void validate() {
+        if (weight <= 0) {
+            throw new IllegalArgumentException("Le poids doit être supérieur à 0");
+        }
+        
+        if (type == null || type.trim().isEmpty()) {
+            throw new IllegalArgumentException("Le type de vélo est obligatoire");
+        }
+        
+        if (length <= 0) {
+            throw new IllegalArgumentException("La longueur doit être supérieure à 0");
+        }
+        
+        if (owner == null) {
+            throw new IllegalArgumentException("Un vélo doit avoir un propriétaire");
+        }
+    }
+
     public int getId() {
         return id;
     }
@@ -59,8 +77,8 @@ public class Bike {
 
     @Override
     public String toString() {
-        if (getId() == 0) return "Sélectionner...";
-        return getType() + " (" + getWeight() + "kg)";
+        if (id == 0) return "Sélectionner...";
+        return type + " (" + weight + "kg, " + length + "cm)";
     }
 
     @Override
@@ -68,18 +86,11 @@ public class Bike {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Bike bike = (Bike) obj;
-        return getId() == bike.getId() &&
-               Double.compare(bike.getWeight(), getWeight()) == 0 &&
-               Double.compare(bike.getLength(), getLength()) == 0 &&
-               (getType() != null ? getType().equals(bike.getType()) : bike.getType() == null);
+        return id == bike.id;
     }
 
     @Override
     public int hashCode() {
-        int result = Integer.hashCode(getId());
-        result = 31 * result + Double.hashCode(getWeight());
-        result = 31 * result + (getType() != null ? getType().hashCode() : 0);
-        result = 31 * result + Double.hashCode(getLength());
-        return result;
+        return Integer.hashCode(id);
     }
 }

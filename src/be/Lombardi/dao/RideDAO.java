@@ -1,23 +1,9 @@
 package be.Lombardi.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
-import be.Lombardi.pojo.CategoryType;
-import be.Lombardi.pojo.Inscription;
-import be.Lombardi.pojo.Manager;
-import be.Lombardi.pojo.Member;
-import be.Lombardi.pojo.Ride;
-import be.Lombardi.pojo.Vehicle;
+import be.Lombardi.pojo.*;
 
 public class RideDAO extends DAO<Ride> {
 
@@ -26,7 +12,7 @@ public class RideDAO extends DAO<Ride> {
     }
 
     @Override
-    public boolean create(Ride ride) {
+    public boolean create(Ride ride) throws DAOException {
         final String SQL = """
             INSERT INTO Ride (start_place, start_date, fee, category, max_inscriptions, manager_id)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -47,7 +33,7 @@ public class RideDAO extends DAO<Ride> {
     }
 
     @Override
-    public boolean delete(Ride ride) {
+    public boolean delete(Ride ride) throws DAOException {
         final String SQL = "DELETE FROM Ride WHERE ride_id = ?";
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
@@ -59,7 +45,7 @@ public class RideDAO extends DAO<Ride> {
     }
 
     @Override
-    public boolean update(Ride ride) {
+    public boolean update(Ride ride) throws DAOException {
         final String SQL = """
             UPDATE Ride
             SET start_place = ?, start_date = ?, fee = ?, category = ?, max_inscriptions = ?, manager_id = ?
@@ -82,299 +68,262 @@ public class RideDAO extends DAO<Ride> {
     }
 
     @Override
-    public Ride find(int id) {
+    public Ride find(int id) throws DAOException {
         final String SQL = """
             SELECT r.ride_id, r.start_place, r.start_date, r.fee, r.category, r.max_inscriptions, r.manager_id,
-                   m.person_id as manager_person_id, p.name as manager_name, p.firstname as manager_firstname,
-                   p.tel as manager_tel, p.username as manager_username,
-                   m.category as manager_category
+                   m.person_id, m.category,
+                   p.name, p.firstname, p.tel, p.username
             FROM Ride r
             LEFT JOIN Manager m ON r.manager_id = m.person_id
             LEFT JOIN Person p ON m.person_id = p.person_id
             WHERE r.ride_id = ?
             """;
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
-            ps.setInt(1, id);
+        final String SQL_INSCRIPTIONS = """
+            SELECT i.inscription_id, i.is_passenger, i.has_bike, i.member_id, i.vehicle_id, i.bike_id,
+                   p.name, p.firstname, p.tel, p.username,
+                   v.seat_number, v.bike_spot_number, v.owner_id,
+                   p_owner.name as owner_name, p_owner.firstname as owner_firstname, 
+                   p_owner.tel as owner_tel, p_owner.username as owner_username,
+                   m_owner.balance as owner_balance
+            FROM Inscription i
+            JOIN Person p ON i.member_id = p.person_id
+            LEFT JOIN Vehicle v ON i.vehicle_id = v.vehicle_id
+            LEFT JOIN Member m_owner ON v.owner_id = m_owner.person_id
+            LEFT JOIN Person p_owner ON m_owner.person_id = p_owner.person_id
+            WHERE i.ride_id = ?
+            """;
+        
+        try {
+            Ride ride;
             
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Manager manager = null;
-                    if (rs.getInt("manager_person_id") != 0) {
-                        manager = new Manager(
-                            rs.getInt("manager_person_id"),
-                            getSafe(rs, "manager_name"),
-                            getSafe(rs, "manager_firstname"),
-                            getSafe(rs, "manager_tel"),
-                            getSafe(rs, "manager_username"),
-                            CategoryType.valueOf(getSafe(rs, "manager_category").toUpperCase())
-                        );
+            try (PreparedStatement st = connect.prepareStatement(SQL)) {
+                st.setInt(1, id);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (!rs.next()) {
+                        return null;
                     }
-                    
-                    return new Ride(
-                        rs.getInt("ride_id"),
-                        getSafe(rs, "start_place"),
-                        rs.getTimestamp("start_date").toLocalDateTime(),
-                        rs.getDouble("fee"),
-                        manager,
-                        rs.getInt("max_inscriptions"),
-                        CategoryType.valueOf(getSafe(rs, "category").toUpperCase())
-                    );
+                    ride = buildRideFromResultSet(rs);
                 }
             }
+            
+            try (PreparedStatement st = connect.prepareStatement(SQL_INSCRIPTIONS)) {
+                st.setInt(1, id);
+                try (ResultSet rs = st.executeQuery()) {
+                    while (rs.next()) {
+                        ride.getInscriptions().add(buildFullInscriptionFromResultSet(rs, ride));
+                    }
+                }
+            }
+            
+            return ride;
+            
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la recherche de la sortie", e);
         }
-        
-        return null;
     }
 
-    public List<Ride> findAll() {
-        final String SQL_RIDES = """
-            SELECT r.ride_id, r.start_place, r.start_date, r.fee, r.category, r.max_inscriptions, r.manager_id,
-                   m.person_id as manager_person_id, p.name as manager_name, p.firstname as manager_firstname,
-                   p.tel as manager_tel, p.username as manager_username,
-                   m.category as manager_category
-            FROM Ride r
-            LEFT JOIN Manager m ON r.manager_id = m.person_id
-            LEFT JOIN Person p ON m.person_id = p.person_id
-            ORDER BY r.start_date DESC
-            """;
-
-        try {
-            List<Ride> rides = new ArrayList<>();
-            Map<Integer, Ride> ridesById = new HashMap<>();
-            
-            try (PreparedStatement st = connect.prepareStatement(SQL_RIDES)) {
-                try (ResultSet rs = st.executeQuery()) {
-                    while (rs.next()) {
-                        Manager manager = null;
-                        if (rs.getInt("manager_person_id") != 0) {
-                            manager = new Manager(
-                                rs.getInt("manager_person_id"),
-                                getSafe(rs, "manager_name"),
-                                getSafe(rs, "manager_firstname"),
-                                getSafe(rs, "manager_tel"),
-                                getSafe(rs, "manager_username"),
-                                CategoryType.valueOf(getSafe(rs, "manager_category").toUpperCase())
-                            );
-                        }
-                        
-                        Ride ride = new Ride(
-                            rs.getInt("ride_id"),
-                            getSafe(rs, "start_place"),
-                            rs.getTimestamp("start_date").toLocalDateTime(),
-                            rs.getDouble("fee"),
-                            manager,
-                            rs.getInt("max_inscriptions"),
-                            CategoryType.valueOf(getSafe(rs, "category").toUpperCase())
-                        );
-                        
-                        rides.add(ride);
-                        ridesById.put(ride.getId(), ride);
-                    }
-                }
-            }
-
-            if (rides.isEmpty()) {
-                return rides;
-            }
-
-            loadVehiclesForRides(rides, ridesById);
-            loadInscriptionsForRides(rides, ridesById);
-
-            return rides;
-
-        } catch (SQLException e) {
-            throw new DAOException("Erreur lors de la récupération de toutes les sorties", e);
-        }
+    public List<Ride> findAll() throws DAOException {
+        return findRidesByCriteria(null);
     }
 
-    public List<Ride> findByMemberCategories(Set<CategoryType> memberCategories) {
+    public List<Ride> findByMemberCategories(Set<CategoryType> memberCategories) throws DAOException {
         if (memberCategories == null || memberCategories.isEmpty()) {
             return new ArrayList<>();
         }
+        return findRidesByCriteria(memberCategories);
+    }
 
-        final String SQL_RIDES = """
+    // Méthode générique pour raccourcir le code : gère findAll() et findByMemberCategories()
+    private List<Ride> findRidesByCriteria(Set<CategoryType> categories) throws DAOException {
+        // Construction dynamique de la clause WHERE selon les catégories
+        String whereClause = (categories != null && !categories.isEmpty()) 
+            ? "WHERE r.category IN (" + String.join(",", Collections.nCopies(categories.size(), "?")) + ")"
+            : "";
+        
+        String sql = String.format("""
             SELECT r.ride_id, r.start_place, r.start_date, r.fee, r.category, r.max_inscriptions, r.manager_id,
-                   m.person_id as manager_person_id, p.name as manager_name, p.firstname as manager_firstname,
-                   p.tel as manager_tel, p.username as manager_username,
-                   m.category as manager_category
+                   m.person_id, m.category,
+                   p.name, p.firstname, p.tel, p.username
             FROM Ride r
             LEFT JOIN Manager m ON r.manager_id = m.person_id
             LEFT JOIN Person p ON m.person_id = p.person_id
-            WHERE r.category IN (%s)
+            %s
             ORDER BY r.start_date DESC
-            """;
-
+            """, whereClause);
+        
         try {
             List<Ride> rides = new ArrayList<>();
-            Map<Integer, Ride> ridesById = new HashMap<>();
             
-            String placeholders = String.join(",", Collections.nCopies(memberCategories.size(), "?"));
-            String ridesSQL = String.format(SQL_RIDES, placeholders);
-            
-            try (PreparedStatement st = connect.prepareStatement(ridesSQL)) {
-                int index = 1;
-                for (CategoryType category : memberCategories) {
-                    st.setString(index++, category.toString());
+            try (PreparedStatement st = connect.prepareStatement(sql)) {
+                // Paramètres dynamiques selon les catégories
+                if (categories != null && !categories.isEmpty()) {
+                    int index = 1;
+                    for (CategoryType category : categories) {
+                        st.setString(index++, category.toString());
+                    }
                 }
                 
                 try (ResultSet rs = st.executeQuery()) {
                     while (rs.next()) {
-                        Manager manager = null;
-                        if (rs.getInt("manager_person_id") != 0) {
-                            manager = new Manager(
-                                rs.getInt("manager_person_id"),
-                                getSafe(rs, "manager_name"),
-                                getSafe(rs, "manager_firstname"),
-                                getSafe(rs, "manager_tel"),
-                                getSafe(rs, "manager_username"),
-                                CategoryType.valueOf(getSafe(rs, "manager_category").toUpperCase())
-                            );
-                        }
-                        
-                        Ride ride = new Ride(
-                            rs.getInt("ride_id"),
-                            getSafe(rs, "start_place"),
-                            rs.getTimestamp("start_date").toLocalDateTime(),
-                            rs.getDouble("fee"),
-                            manager,
-                            rs.getInt("max_inscriptions"),
-                            CategoryType.valueOf(getSafe(rs, "category").toUpperCase())
-                        );
-                        
-                        rides.add(ride);
-                        ridesById.put(ride.getId(), ride);
+                        rides.add(buildRideFromResultSet(rs));
                     }
                 }
             }
-
-            if (rides.isEmpty()) {
-                return rides;
+            
+            if (!rides.isEmpty()) {
+                loadInscriptionsForRides(rides);
             }
-
-            loadVehiclesForRides(rides, ridesById);
-            loadInscriptionsForRides(rides, ridesById);
-
+            
             return rides;
-
-        } catch (SQLException e) {
-            throw new DAOException("Erreur lors de la récupération des sorties par catégories", e);
-        }
-    }
-
-    private void loadVehiclesForRides(List<Ride> rides, Map<Integer, Ride> ridesById) {
-        if (rides.isEmpty()) return;
-
-        final String SQL_VEHICLES = """
-            SELECT DISTINCT i.ride_id, v.vehicle_id, v.seat_number, v.bike_spot_number, v.owner_id,
-                   p.name as owner_name, p.firstname as owner_firstname, p.tel as owner_tel,
-                   p.username as owner_username, m.balance as owner_balance
-            FROM Inscription i
-            JOIN Vehicle v ON i.vehicle_id = v.vehicle_id
-            JOIN Member m ON v.owner_id = m.person_id
-            JOIN Person p ON m.person_id = p.person_id
-            WHERE i.ride_id IN (%s)
-            AND i.vehicle_id IS NOT NULL
-            ORDER BY i.ride_id, v.vehicle_id
-            """;
-
-        try {
-            String placeholders = String.join(",", Collections.nCopies(rides.size(), "?"));
-            String vehiclesSQL = String.format(SQL_VEHICLES, placeholders);
             
-            try (PreparedStatement st = connect.prepareStatement(vehiclesSQL)) {
-                int index = 1;
-                for (Ride ride : rides) {
-                    st.setInt(index++, ride.getId());
-                }
-                
-                try (ResultSet rs = st.executeQuery()) {
-                    while (rs.next()) {
-                        int rideId = rs.getInt("ride_id");
-                        Ride ride = ridesById.get(rideId);
-                        
-                        if (ride != null) {
-                            Member owner = new Member(
-                                rs.getInt("owner_id"),
-                                getSafe(rs, "owner_name"),
-                                getSafe(rs, "owner_firstname"),
-                                getSafe(rs, "owner_tel"),
-                                getSafe(rs, "owner_username"),
-                                rs.getDouble("owner_balance")
-                            );
-                            
-                            Vehicle vehicle = new Vehicle(
-                                rs.getInt("vehicle_id"),
-                                rs.getInt("seat_number"),
-                                rs.getInt("bike_spot_number"),
-                                owner
-                            );
-                            
-                            if (!ride.getVehicles().contains(vehicle)) {
-                                ride.getVehicles().add(vehicle);
-                            }
-                        }
-                    }
-                }
-            }
         } catch (SQLException e) {
-            throw new DAOException("Erreur lors du chargement des véhicules", e);
+            throw new DAOException("Erreur lors de la récupération des sorties", e);
         }
     }
 
-    private void loadInscriptionsForRides(List<Ride> rides, Map<Integer, Ride> ridesById) {
-        if (rides.isEmpty()) return;
+    // Orchestre le chargement des inscriptions (qui contiennent les vehicles)
+    private void loadInscriptionsForRides(List<Ride> rides) throws DAOException {
+        // LinkedHashMap : garde l'ordre d'insertion + accès O(1) par ride.getId()
+        Map<Integer, Ride> ridesById = new LinkedHashMap<>();
+        for (Ride ride : rides) {
+            ridesById.put(ride.getId(), ride);
+        }
+        
+        loadInscriptionsForRidesMap(ridesById);
+    }
 
-        final String SQL_INSCRIPTIONS = """
-            SELECT i.inscription_id, i.is_passenger, i.has_bike, i.member_id, i.ride_id,
-                   p.name as member_name, p.firstname as member_firstname
+    // Batch loading : charge inscriptions de TOUTES les rides en 1 seule requête avec IN (?, ?, ...)
+    // ✅ INCLUT le Vehicle dans la même requête (pas de redondance)
+    private void loadInscriptionsForRidesMap(Map<Integer, Ride> ridesById) throws DAOException {
+        final String SQL = """
+            SELECT i.inscription_id, i.is_passenger, i.has_bike, i.member_id, i.ride_id, i.vehicle_id, i.bike_id,
+                   p.name, p.firstname, p.tel, p.username,
+                   v.seat_number, v.bike_spot_number, v.owner_id,
+                   p_owner.name as owner_name, p_owner.firstname as owner_firstname, 
+                   p_owner.tel as owner_tel, p_owner.username as owner_username,
+                   m_owner.balance as owner_balance
             FROM Inscription i
             JOIN Person p ON i.member_id = p.person_id
+            LEFT JOIN Vehicle v ON i.vehicle_id = v.vehicle_id
+            LEFT JOIN Member m_owner ON v.owner_id = m_owner.person_id
+            LEFT JOIN Person p_owner ON m_owner.person_id = p_owner.person_id
             WHERE i.ride_id IN (%s)
             ORDER BY i.ride_id, i.inscription_id
             """;
-
-        try {
-            String placeholders = String.join(",", Collections.nCopies(rides.size(), "?"));
-            String inscriptionsSQL = String.format(SQL_INSCRIPTIONS, placeholders);
+        
+        String placeholders = String.join(",", Collections.nCopies(ridesById.size(), "?"));
+        String finalSql = String.format(SQL, placeholders);
+        
+        try (PreparedStatement st = connect.prepareStatement(finalSql)) {
+            int index = 1;
+            for (Integer rideId : ridesById.keySet()) {
+                st.setInt(index++, rideId);
+            }
             
-            try (PreparedStatement st = connect.prepareStatement(inscriptionsSQL)) {
-                int index = 1;
-                for (Ride ride : rides) {
-                    st.setInt(index++, ride.getId());
-                }
-                
-                try (ResultSet rs = st.executeQuery()) {
-                    while (rs.next()) {
-                        int rideId = rs.getInt("ride_id");
-                        Ride ride = ridesById.get(rideId);
-                        
-                        if (ride != null) {
-                            Member member = new Member(
-                                rs.getInt("member_id"),
-                                getSafe(rs, "member_name"),
-                                getSafe(rs, "member_firstname"),
-                                "", "", 0.0
-                            );
-                            
-                            Inscription inscription = new Inscription(
-                                rs.getInt("inscription_id"),
-                                rs.getBoolean("is_passenger"),
-                                rs.getBoolean("has_bike"),
-                                member,
-                                ride
-                            );
-                            
-                            ride.getInscriptions().add(inscription);
-                        }
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    int rideId = rs.getInt("ride_id");
+                    Ride ride = ridesById.get(rideId);
+                    if (ride != null) {
+                        ride.getInscriptions().add(buildFullInscriptionFromResultSet(rs, ride));
                     }
                 }
             }
-
         } catch (SQLException e) {
             throw new DAOException("Erreur lors du chargement des inscriptions", e);
+        }
+    }
+
+    // Méthode pour raccourcir le code : construit un Ride depuis ResultSet
+    private Ride buildRideFromResultSet(ResultSet rs) throws SQLException {
+        Manager manager = null;
+        if (rs.getInt("person_id") != 0) {
+            manager = buildManagerFromResultSet(rs);
+        }
+        
+        CategoryType rideCategory = parseCategoryType(getSafe(rs, "category"));
+        Timestamp timestamp = rs.getTimestamp("start_date");
+        
+        return new Ride(
+            rs.getInt("ride_id"),
+            getSafe(rs, "start_place"),
+            timestamp != null ? timestamp.toLocalDateTime() : null,
+            rs.getDouble("fee"),
+            manager,
+            rs.getInt("max_inscriptions"),
+            rideCategory
+        );
+    }
+
+    // Méthode pour raccourcir le code : construit un Manager depuis ResultSet
+    private Manager buildManagerFromResultSet(ResultSet rs) throws SQLException {
+        CategoryType category = parseCategoryType(getSafe(rs, "category"));
+        
+        return new Manager(
+            rs.getInt("person_id"),
+            getSafe(rs, "name"),
+            getSafe(rs, "firstname"),
+            getSafe(rs, "tel"),
+            getSafe(rs, "username"),
+            category
+        );
+    }
+
+    // Méthode pour raccourcir le code : construit une Inscription COMPLÈTE (avec Vehicle si présent)
+    private Inscription buildFullInscriptionFromResultSet(ResultSet rs, Ride ride) throws SQLException {
+        Member member = new Member(
+            rs.getInt("member_id"),
+            getSafe(rs, "name"),
+            getSafe(rs, "firstname"),
+            getSafe(rs, "tel"),
+            getSafe(rs, "username"),
+            0.0
+        );
+        
+        Inscription inscription = new Inscription(
+            rs.getInt("inscription_id"),
+            rs.getBoolean("is_passenger"),
+            rs.getBoolean("has_bike"),
+            member,
+            ride
+        );
+        
+        // ✅ Charger le Vehicle si présent (évite la redondance)
+        int vehicleId = rs.getInt("vehicle_id");
+        if (vehicleId != 0) {
+            Member owner = new Member(
+                rs.getInt("owner_id"),
+                getSafe(rs, "owner_name"),
+                getSafe(rs, "owner_firstname"),
+                getSafe(rs, "owner_tel"),
+                getSafe(rs, "owner_username"),
+                rs.getDouble("owner_balance")
+            );
+            
+            Vehicle vehicle = new Vehicle(
+                vehicleId,
+                rs.getInt("seat_number"),
+                rs.getInt("bike_spot_number"),
+                owner
+            );
+            
+            inscription.setVehicle(vehicle);
+        }
+        
+        // TODO: Charger le Bike si has_bike = true et bike_id != null
+        
+        return inscription;
+    }
+
+    private CategoryType parseCategoryType(String categoryStr) {
+        if (categoryStr == null || categoryStr.isEmpty()) {
+            return null;
+        }
+        try {
+            return CategoryType.valueOf(categoryStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 

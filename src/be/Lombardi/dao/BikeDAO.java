@@ -1,14 +1,10 @@
 package be.Lombardi.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import be.Lombardi.pojo.Bike;
-import be.Lombardi.pojo.Member;
+import be.Lombardi.pojo.*;
 
 public class BikeDAO extends DAO<Bike> {
 
@@ -17,23 +13,33 @@ public class BikeDAO extends DAO<Bike> {
     }
 
     @Override
-    public boolean create(Bike bike) {
+    public boolean create(Bike bike) throws DAOException {
         final String SQL = "INSERT INTO Bike (weight, type, length, owner_id) VALUES (?, ?, ?, ?)";
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+        try (PreparedStatement ps = connect.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS)) {
             ps.setDouble(1, bike.getWeight());
             ps.setString(2, bike.getType());
             ps.setDouble(3, bike.getLength());
             ps.setInt(4, bike.getOwner().getId());
             
-            return ps.executeUpdate() > 0;
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        bike.setId(rs.getInt(1));
+                    }
+                }
+                return true;
+            }
+            return false;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la création du vélo", e);
         }
     }
 
     @Override
-    public boolean delete(Bike bike) {
+    public boolean delete(Bike bike) throws DAOException {
         final String SQL = "DELETE FROM Bike WHERE bike_id = ?";
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
@@ -45,8 +51,12 @@ public class BikeDAO extends DAO<Bike> {
     }
 
     @Override
-    public boolean update(Bike bike) {
-        final String SQL = "UPDATE Bike SET weight = ?, type = ?, length = ?, owner_id = ? WHERE bike_id = ?";
+    public boolean update(Bike bike) throws DAOException {
+        final String SQL = """
+            UPDATE Bike
+            SET weight = ?, type = ?, length = ?, owner_id = ?
+            WHERE bike_id = ?
+            """;
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setDouble(1, bike.getWeight());
@@ -54,6 +64,7 @@ public class BikeDAO extends DAO<Bike> {
             ps.setDouble(3, bike.getLength());
             ps.setInt(4, bike.getOwner().getId());
             ps.setInt(5, bike.getId());
+            
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la mise à jour du vélo", e);
@@ -61,7 +72,7 @@ public class BikeDAO extends DAO<Bike> {
     }
 
     @Override
-    public Bike find(int id) {
+    public Bike find(int id) throws DAOException {
         final String SQL = """
             SELECT b.bike_id, b.weight, b.type, b.length, b.owner_id,
                    p.name, p.firstname, p.tel, p.username,
@@ -79,17 +90,17 @@ public class BikeDAO extends DAO<Bike> {
                 if (rs.next()) {
                     Member owner = new Member(
                         rs.getInt("owner_id"),
-                        rs.getString("name"),
-                        rs.getString("firstname"),
-                        rs.getString("tel"),
-                        rs.getString("username"),
+                        getSafe(rs, "name"),
+                        getSafe(rs, "firstname"),
+                        getSafe(rs, "tel"),
+                        getSafe(rs, "username"),
                         rs.getDouble("balance")
                     );
                     
                     return new Bike(
                         rs.getInt("bike_id"),
                         rs.getDouble("weight"),
-                        rs.getString("type"),
+                        getSafe(rs, "type"),
                         rs.getDouble("length"),
                         owner
                     );
@@ -102,8 +113,9 @@ public class BikeDAO extends DAO<Bike> {
         return null;
     }
 
-    public List<Bike> findByMember(Member member) {
-        final String SQL = "SELECT bike_id, weight, type, length FROM Bike WHERE owner_id = ? ORDER BY type";
+    public List<Bike> findByMember(Member member) throws DAOException {
+        final String SQL = "SELECT bike_id, weight, type, length FROM Bike WHERE owner_id = ?";
+        
         List<Bike> bikes = new ArrayList<>();
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
@@ -114,17 +126,27 @@ public class BikeDAO extends DAO<Bike> {
                     Bike bike = new Bike(
                         rs.getInt("bike_id"),
                         rs.getDouble("weight"),
-                        rs.getString("type"),
+                        getSafe(rs, "type"),
                         rs.getDouble("length"),
                         member
                     );
+                    
                     bikes.add(bike);
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("Erreur lors de la recherche des vélos", e);
+            throw new DAOException("Erreur lors de la recherche des vélos du membre", e);
         }
         
         return bikes;
+    }
+
+    private String getSafe(ResultSet rs, String col) {
+        try {
+            String v = rs.getString(col);
+            return v != null ? v : "";
+        } catch (SQLException e) {
+            return "";
+        }
     }
 }

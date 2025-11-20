@@ -1,12 +1,8 @@
 package be.Lombardi.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
-import be.Lombardi.daofactory.AbstractDAOFactory;
-import be.Lombardi.pojo.Treasurer;
+import be.Lombardi.pojo.*;
 
 public class TreasurerDAO extends DAO<Treasurer> {
 
@@ -15,33 +11,40 @@ public class TreasurerDAO extends DAO<Treasurer> {
     }
 
     @Override
-    public boolean create(Treasurer treasurer) {
-        AbstractDAOFactory factory = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
-        MemberDAO memberDAO = (MemberDAO) factory.getMemberDAO();
-        ManagerDAO managerDAO = (ManagerDAO) factory.getManagerDAO();
+    public boolean create(Treasurer treasurer) throws DAOException {
+        final String SQL_PERSON = "INSERT INTO Person (name, firstname, tel, username) VALUES (?, ?, ?, ?)";
+        final String SQL_TREASURER = "INSERT INTO Treasurer (person_id) VALUES (?)";
         
-        if (memberDAO.find(treasurer.getId()) != null) {
-            throw new IllegalStateException("Cette personne est déjà Member. Un Member ne peut pas être Treasurer.");
-        }
-        
-        if (managerDAO.find(treasurer.getId()) != null) {
-            throw new IllegalStateException("Cette personne est déjà Manager.");
-        }
-        
-        final String SQL = "INSERT INTO Treasurer (person_id) VALUES (?)";
-        
-        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
-            ps.setInt(1, treasurer.getId());
+        try (PreparedStatement psPerson = connect.prepareStatement(SQL_PERSON, Statement.RETURN_GENERATED_KEYS)) {
+            psPerson.setString(1, treasurer.getName());
+            psPerson.setString(2, treasurer.getFirstname());
+            psPerson.setString(3, treasurer.getTel());
+            psPerson.setString(4, treasurer.getUsername());
             
-            return ps.executeUpdate() > 0;
+            int rowsAffected = psPerson.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                try (ResultSet rs = psPerson.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int personId = rs.getInt(1);
+                        treasurer.setId(personId);
+                        
+                        try (PreparedStatement psTreasurer = connect.prepareStatement(SQL_TREASURER)) {
+                            psTreasurer.setInt(1, personId);
+                            return psTreasurer.executeUpdate() > 0;
+                        }
+                    }
+                }
+            }
+            return false;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la création du trésorier", e);
         }
     }
 
     @Override
-    public boolean delete(Treasurer treasurer) {
-        final String SQL = "DELETE FROM Treasurer WHERE person_id = ?";
+    public boolean delete(Treasurer treasurer) throws DAOException {
+        final String SQL = "DELETE FROM Person WHERE person_id = ?";
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setInt(1, treasurer.getId());
@@ -52,37 +55,62 @@ public class TreasurerDAO extends DAO<Treasurer> {
     }
 
     @Override
-    public boolean update(Treasurer treasurer) {
-        return true;
+    public boolean update(Treasurer treasurer) throws DAOException {
+        final String SQL = """
+            UPDATE Person
+            SET name = ?, firstname = ?, tel = ?, username = ?
+            WHERE person_id = ?
+            """;
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setString(1, treasurer.getName());
+            ps.setString(2, treasurer.getFirstname());
+            ps.setString(3, treasurer.getTel());
+            ps.setString(4, treasurer.getUsername());
+            ps.setInt(5, treasurer.getId());
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la mise à jour du trésorier", e);
+        }
     }
 
     @Override
-    public Treasurer find(int id) {
+    public Treasurer find(int id) throws DAOException {
         final String SQL = """
             SELECT p.person_id, p.name, p.firstname, p.tel, p.username
-            FROM Person p
-            JOIN Treasurer t ON t.person_id = p.person_id
-            WHERE p.person_id = ?
+            FROM Treasurer t
+            JOIN Person p ON t.person_id = p.person_id
+            WHERE t.person_id = ?
             """;
-
+        
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setInt(1, id);
-
+            
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new Treasurer(
                         rs.getInt("person_id"),
-                        rs.getString("name"),
-                        rs.getString("firstname"),
-                        rs.getString("tel"),
-                        rs.getString("username")
+                        getSafe(rs, "name"),
+                        getSafe(rs, "firstname"),
+                        getSafe(rs, "tel"),
+                        getSafe(rs, "username")
                     );
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("Erreur lors de la récupération du trésorier", e);
+            throw new DAOException("Erreur lors de la recherche du trésorier", e);
         }
         
         return null;
+    }
+
+    private String getSafe(ResultSet rs, String col) {
+        try {
+            String v = rs.getString(col);
+            return v != null ? v : "";
+        } catch (SQLException e) {
+            return "";
+        }
     }
 }

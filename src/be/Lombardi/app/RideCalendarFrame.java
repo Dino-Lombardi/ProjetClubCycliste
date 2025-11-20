@@ -26,10 +26,11 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import be.Lombardi.dao.DAO;
 import be.Lombardi.dao.DAOException;
 import be.Lombardi.dao.RideDAO;
 import be.Lombardi.daofactory.AbstractDAOFactory;
+import be.Lombardi.app.OfferVehicleFrame;
+import be.Lombardi.app.ReserveSpotFrame;
 import be.Lombardi.pojo.Member;
 import be.Lombardi.pojo.Ride;
 import com.toedter.calendar.JDateChooser;
@@ -45,8 +46,8 @@ public class RideCalendarFrame extends JFrame {
     private boolean firstLoad = true;
 
     public RideCalendarFrame(Member member) {
-        DAO<Ride> dao = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY).getRideDAO();
-        this.rideDAO = (RideDAO) dao;
+        AbstractDAOFactory daoFactory = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
+        this.rideDAO = (RideDAO) daoFactory.getRideDAO();
         this.member = member;
         
         if (member == null) {
@@ -54,6 +55,8 @@ public class RideCalendarFrame extends JFrame {
             new LoginFrame().setVisible(true);
             return;
         }
+        
+       
         
         initUI();
     }
@@ -94,6 +97,8 @@ public class RideCalendarFrame extends JFrame {
         };
         
         DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -121,6 +126,8 @@ public class RideCalendarFrame extends JFrame {
         rideTable.getColumnModel().getColumn(8).setPreferredWidth(120);
 
         rideTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                     boolean isSelected, boolean hasFocus, int row, int column) {
@@ -197,6 +204,7 @@ public class RideCalendarFrame extends JFrame {
                 .collect(Collectors.toList());
             
             updateTable();
+            System.out.println(allRides.get(0).getVehicles());
             
         } catch (DAOException e) {
             JOptionPane.showMessageDialog(this,

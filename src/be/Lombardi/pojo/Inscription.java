@@ -19,6 +19,36 @@ public class Inscription {
         this.ride = ride;
     }
 
+    public void validate() {
+        if (member == null) {
+            throw new IllegalArgumentException("Une inscription doit avoir un membre");
+        }
+        
+        if (ride == null) {
+            throw new IllegalArgumentException("Une inscription doit être liée à une sortie");
+        }
+        
+        if (!isPassenger && vehicle == null) {
+            throw new IllegalArgumentException("Un conducteur doit proposer un véhicule");
+        }
+        
+        if (isPassenger && vehicle == null) {
+            throw new IllegalArgumentException("Un passager doit sélectionner un véhicule");
+        }
+        
+        if (!isPassenger && vehicle != null && member != null && !vehicle.getOwner().equals(member)) {
+            throw new IllegalArgumentException("Incohérence : membre déclaré conducteur mais véhicule d'un autre membre");
+        }
+        
+        if (hasBike && bike == null) {
+            throw new IllegalArgumentException("Si hasBike est true, un vélo doit être spécifié");
+        }
+        
+        if (bike != null && member != null && !bike.getOwner().equals(member)) {
+            throw new IllegalArgumentException("Le vélo doit appartenir au membre inscrit");
+        }
+    }
+
     public int getId() {
         return id;
     }
@@ -31,32 +61,16 @@ public class Inscription {
         return isPassenger;
     }
 
-    public void setIsPassenger(boolean passenger) {
-        isPassenger = passenger;
-    }
-
     public boolean hasBike() {
         return hasBike;
-    }
-
-    public void setHasBike(boolean hasBike) {
-        this.hasBike = hasBike;
     }
 
     public Member getMember() {
         return member;
     }
 
-    public void setMember(Member member) {
-        this.member = member;
-    }
-
     public Ride getRide() {
         return ride;
-    }
-
-    public void setRide(Ride ride) {
-        this.ride = ride;
     }
 
     public Vehicle getVehicle() {
@@ -78,13 +92,13 @@ public class Inscription {
     @Override
     public String toString() {
         return "Inscription{" +
-               "id=" + getId() +
-               ", member=" + (getMember() != null ? getMember().getId() : "null") +
-               ", ride=" + (getRide() != null ? getRide().getId() : "null") +
-               ", vehicle=" + (getVehicle() != null ? getVehicle().getId() : "null") +
-               ", bike=" + (getBike() != null ? getBike().getId() : "null") +
-               ", isPassenger=" + isPassenger() +
-               ", hasBike=" + hasBike() +
+               "id=" + id +
+               ", member=" + (member != null ? member.getId() : "null") +
+               ", ride=" + (ride != null ? ride.getId() : "null") +
+               ", vehicle=" + (vehicle != null ? vehicle.getId() : "null") +
+               ", bike=" + (bike != null ? bike.getId() : "null") +
+               ", isPassenger=" + isPassenger +
+               ", hasBike=" + hasBike +
                '}';
     }
 
@@ -93,16 +107,11 @@ public class Inscription {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Inscription that = (Inscription) obj;
-        return getId() == that.getId() &&
-               isPassenger() == that.isPassenger() &&
-               hasBike() == that.hasBike();
+        return id == that.id;
     }
 
     @Override
     public int hashCode() {
-        int result = Integer.hashCode(getId());
-        result = 31 * result + (isPassenger() ? 1 : 0);
-        result = 31 * result + (hasBike() ? 1 : 0);
-        return result;
+        return Integer.hashCode(id);
     }
 }

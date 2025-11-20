@@ -15,6 +15,20 @@ public class Vehicle {
         this.owner = owner;
     }
 
+    public void validate() {
+        if (seatNumber < 1) {
+            throw new IllegalArgumentException("Un véhicule doit avoir au moins 1 place (le conducteur)");
+        }
+        
+        if (bikeSpotNumber < 0) {
+            throw new IllegalArgumentException("Le nombre de places vélos ne peut pas être négatif");
+        }
+        
+        if (owner == null) {
+            throw new IllegalArgumentException("Un véhicule doit avoir un propriétaire");
+        }
+    }
+
     public int getId() {
         return id;
     }
@@ -49,12 +63,12 @@ public class Vehicle {
 
     @Override
     public String toString() {
-        if (getId() == 0) return "Sélectionner...";
+        if (id == 0) return "Sélectionner...";
         return "Vehicle{" +
-               "id=" + getId() +
-               ", seatNumber=" + getSeatNumber() +
-               ", bikeSpotNumber=" + getBikeSpotNumber() +
-               ", owner=" + (getOwner() != null ? getOwner().getId() : "null") +
+               "id=" + id +
+               ", seatNumber=" + seatNumber +
+               ", bikeSpotNumber=" + bikeSpotNumber +
+               ", owner=" + (owner != null ? owner.getId() : "null") +
                '}';
     }
 
@@ -63,16 +77,11 @@ public class Vehicle {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Vehicle vehicle = (Vehicle) obj;
-        return getId() == vehicle.getId() &&
-               getSeatNumber() == vehicle.getSeatNumber() &&
-               getBikeSpotNumber() == vehicle.getBikeSpotNumber();
+        return id == vehicle.id;
     }
 
     @Override
     public int hashCode() {
-        int result = Integer.hashCode(getId());
-        result = 31 * result + Integer.hashCode(getSeatNumber());
-        result = 31 * result + Integer.hashCode(getBikeSpotNumber());
-        return result;
+        return Integer.hashCode(id);
     }
 }

@@ -1,12 +1,9 @@
 package be.Lombardi.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 import be.Lombardi.daofactory.AbstractDAOFactory;
-import be.Lombardi.pojo.Person;
+import be.Lombardi.pojo.*;
 
 public class PersonDAO extends DAO<Person> {
 
@@ -15,32 +12,37 @@ public class PersonDAO extends DAO<Person> {
     }
 
     @Override
-    public boolean create(Person obj) {
-        final String SQL = """
-            INSERT INTO Person (name, firstname, tel, username, password, role)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """;
+    public boolean create(Person person) throws DAOException {
+        final String SQL = "INSERT INTO Person (name, firstname, tel, username) VALUES (?, ?, ?, ?)";
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
-            ps.setString(1, obj.getName());
-            ps.setString(2, obj.getFirstname());
-            ps.setString(3, obj.getTel());
-            ps.setString(4, obj.getUsername());
-            ps.setString(5, "defaultPassword");
-            ps.setString(6, "MEMBER");
+        try (PreparedStatement ps = connect.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, person.getName());
+            ps.setString(2, person.getFirstname());
+            ps.setString(3, person.getTel());
+            ps.setString(4, person.getUsername());
             
-            return ps.executeUpdate() > 0;
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        person.setId(rs.getInt(1));
+                    }
+                }
+                return true;
+            }
+            return false;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la création de la personne", e);
         }
     }
 
     @Override
-    public boolean delete(Person obj) {
+    public boolean delete(Person person) throws DAOException {
         final String SQL = "DELETE FROM Person WHERE person_id = ?";
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
-            ps.setInt(1, obj.getId());
+            ps.setInt(1, person.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la suppression de la personne", e);
@@ -48,7 +50,7 @@ public class PersonDAO extends DAO<Person> {
     }
 
     @Override
-    public boolean update(Person obj) {
+    public boolean update(Person person) throws DAOException {
         final String SQL = """
             UPDATE Person
             SET name = ?, firstname = ?, tel = ?, username = ?
@@ -56,11 +58,11 @@ public class PersonDAO extends DAO<Person> {
             """;
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
-            ps.setString(1, obj.getName());
-            ps.setString(2, obj.getFirstname());
-            ps.setString(3, obj.getTel());
-            ps.setString(4, obj.getUsername());
-            ps.setInt(5, obj.getId());
+            ps.setString(1, person.getName());
+            ps.setString(2, person.getFirstname());
+            ps.setString(3, person.getTel());
+            ps.setString(4, person.getUsername());
+            ps.setInt(5, person.getId());
             
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -69,11 +71,33 @@ public class PersonDAO extends DAO<Person> {
     }
 
     @Override
-    public Person find(int id) {
+    public Person find(int id) throws DAOException {
+        final String SQL = "SELECT person_id, name, firstname, tel, username FROM Person WHERE person_id = ?";
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setInt(1, id);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Person(
+                        rs.getInt("person_id"),
+                        getSafe(rs, "name"),
+                        getSafe(rs, "firstname"),
+                        getSafe(rs, "tel"),
+                        getSafe(rs, "username")
+                    ) {
+                        // Classe anonyme car Person est abstraite
+                    };
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la recherche de la personne", e);
+        }
+        
         return null;
     }
 
-    public Person login(String username, String password) {
+    public Person login(String username, String password) throws DAOException {
         final String SQL = """
             SELECT person_id, role
             FROM Person
@@ -87,7 +111,7 @@ public class PersonDAO extends DAO<Person> {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int id = rs.getInt("person_id");
-                    String role = rs.getString("role");
+                    String role = getSafe(rs, "role");
 
                     AbstractDAOFactory factory = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
 
@@ -111,5 +135,14 @@ public class PersonDAO extends DAO<Person> {
         }
 
         return null;
+    }
+
+    private String getSafe(ResultSet rs, String col) {
+        try {
+            String v = rs.getString(col);
+            return v != null ? v : "";
+        } catch (SQLException e) {
+            return "";
+        }
     }
 }

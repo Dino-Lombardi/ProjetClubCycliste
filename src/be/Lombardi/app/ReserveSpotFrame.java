@@ -6,274 +6,219 @@ import be.Lombardi.pojo.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ReserveSpotFrame extends JFrame {
-    private Member member;
-    private Ride ride;
-    private BikeDAO bikeDAO;
-    private InscriptionDAO inscriptionDAO;
-    private VehicleDAO vehicleDAO;
-
-    private JComboBox<String> driverCombo;
+    private final Member member;
+    private final Ride ride;
+    private final BikeDAO bikeDAO;
+    private final InscriptionDAO inscriptionDAO;
+    
+    private JComboBox<Vehicle> vehicleCombo;
+    private JCheckBox bringBikeCheckBox;
     private JComboBox<Bike> bikeCombo;
-    private JCheckBox chkBringBike;
-    private JButton btnNewBike, btnSubmit, btnCancel;
-    private JTextArea vehicleDetailsArea;
-
-    private Map<String, Vehicle> driverToVehicleMap;
-
+    private JLabel availableSeatsLabel;
+    private JLabel availableBikeSpotsLabel;
+    
     public ReserveSpotFrame(Member member, Ride ride) {
         this.member = member;
         this.ride = ride;
         
-        AbstractDAOFactory factory = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
-        this.bikeDAO = (BikeDAO) factory.getBikeDAO();
-        this.inscriptionDAO = (InscriptionDAO) factory.getInscriptionDAO();
-        this.vehicleDAO = (VehicleDAO) factory.getVehicleDAO();
-        this.driverToVehicleMap = new HashMap<>();
-
-        setTitle("Réserver ma place - " + ride.getStartPlace());
-        setSize(650, 550);
+        AbstractDAOFactory daoFactory = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
+        this.bikeDAO = (BikeDAO) daoFactory.getBikeDAO();
+        this.inscriptionDAO = (InscriptionDAO) daoFactory.getInscriptionDAO();
+        
+        setTitle("Réserver une place - " + ride.getStartPlace());
+        setSize(500, 450);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-        initUI();
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        
+        initComponents();
+        loadVehicles();
         loadMemberBikes();
-        loadAvailableDrivers();
     }
-
-    private void initUI() {
+    
+    private void initComponents() {
         setLayout(new BorderLayout(10, 10));
         
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel driverTitle = new JLabel("Choisir un conducteur:");
-        driverTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
-        driverTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainPanel.add(driverTitle);
-        mainPanel.add(Box.createVerticalStrut(10));
-
-        driverCombo = new JComboBox<>();
-        driverCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        driverCombo.setMaximumSize(new Dimension(600, 30));
-        driverCombo.addActionListener(e -> updateVehicleDetails());
-        mainPanel.add(driverCombo);
-        mainPanel.add(Box.createVerticalStrut(15));
-
-        JLabel detailsTitle = new JLabel("Détails du véhicule:");
-        detailsTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
-        detailsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainPanel.add(detailsTitle);
-        mainPanel.add(Box.createVerticalStrut(5));
-
-        vehicleDetailsArea = new JTextArea(6, 50);
-        vehicleDetailsArea.setEditable(false);
-        vehicleDetailsArea.setBackground(new Color(240, 240, 240));
-        vehicleDetailsArea.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-        vehicleDetailsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        JScrollPane detailsScroll = new JScrollPane(vehicleDetailsArea);
-        detailsScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainPanel.add(detailsScroll);
-        mainPanel.add(Box.createVerticalStrut(20));
-
-        JPanel bikePanel = new JPanel();
-        bikePanel.setLayout(new BoxLayout(bikePanel, BoxLayout.Y_AXIS));
-        bikePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        chkBringBike = new JCheckBox("J'amène mon vélo");
-        chkBringBike.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bikePanel.add(chkBringBike);
-        bikePanel.add(Box.createVerticalStrut(10));
-
-        JLabel bikeLabel = new JLabel("Sélectionner mon vélo:");
-        bikeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bikePanel.add(bikeLabel);
-        bikePanel.add(Box.createVerticalStrut(5));
-
-        JPanel bikeSelectionPanel = new JPanel(new BorderLayout());
-        bikeSelectionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bikeSelectionPanel.setMaximumSize(new Dimension(600, 30));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        JLabel titleLabel = new JLabel("Réserver une place passager", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        mainPanel.add(titleLabel, gbc);
+        
+        gbc.gridy = 1;
+        JLabel rideInfoLabel = new JLabel("Sortie: " + ride.getStartPlace() + " - " + ride.getStartDate().toLocalDate());
+        mainPanel.add(rideInfoLabel, gbc);
+        
+        gbc.gridwidth = 1;
+        
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        mainPanel.add(new JLabel("Sélectionner un conducteur:"), gbc);
+        
+        gbc.gridx = 1;
+        vehicleCombo = new JComboBox<>();
+        vehicleCombo.addActionListener(e -> updateAvailableSpots());
+        vehicleCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, 
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                
+                if (value == null) {
+                    setText("Sélectionner...");
+                } else if (value instanceof Vehicle vehicle) {
+                    Member owner = vehicle.getOwner();
+                    setText(String.format("%s %s - Véhicule #%d (%d places, %d places vélos)",
+                        owner.getFirstname(),
+                        owner.getName(),
+                        vehicle.getId(),
+                        vehicle.getSeatNumber(),
+                        vehicle.getBikeSpotNumber()));
+                }
+                
+                return this;
+            }
+        });
+        mainPanel.add(vehicleCombo, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        availableSeatsLabel = new JLabel("Places disponibles: -");
+        mainPanel.add(availableSeatsLabel, gbc);
+        
+        gbc.gridy = 4;
+        availableBikeSpotsLabel = new JLabel("Places vélos disponibles: -");
+        mainPanel.add(availableBikeSpotsLabel, gbc);
+        
+        gbc.gridy = 5;
+        bringBikeCheckBox = new JCheckBox("J'amène un vélo");
+        bringBikeCheckBox.addActionListener(e -> updateBikeComboState());
+        mainPanel.add(bringBikeCheckBox, gbc);
+        
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        mainPanel.add(new JLabel("Sélectionner un vélo:"), gbc);
+        
+        gbc.gridx = 1;
         bikeCombo = new JComboBox<>();
         bikeCombo.setEnabled(false);
-        bikeSelectionPanel.add(bikeCombo, BorderLayout.CENTER);
-        
-        btnNewBike = new JButton("Nouveau");
-        btnNewBike.setEnabled(false);
-        bikeSelectionPanel.add(btnNewBike, BorderLayout.EAST);
-        
-        bikePanel.add(bikeSelectionPanel);
-        mainPanel.add(bikePanel);
-
-        mainPanel.add(Box.createVerticalGlue());
-
-        JScrollPane mainScroll = new JScrollPane(mainPanel);
-        add(mainScroll, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        btnCancel = new JButton("Annuler");
-        btnSubmit = new JButton("Réserver ma place");
-        buttonPanel.add(btnCancel);
-        buttonPanel.add(btnSubmit);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        setupListeners();
-    }
-
-    private void setupListeners() {
-        btnCancel.addActionListener(e -> dispose());
-        btnNewBike.addActionListener(e -> showNewBikeDialog());
-        btnSubmit.addActionListener(e -> submitReservation());
-        
-        chkBringBike.addActionListener(e -> {
-            boolean bringBike = chkBringBike.isSelected();
-            bikeCombo.setEnabled(bringBike);
-            btnNewBike.setEnabled(bringBike);
+        bikeCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, 
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                
+                if (value == null) {
+                    setText("Sélectionner...");
+                } else if (value instanceof Bike bike) {
+                    setText(String.format("Vélo #%d - %.1fkg, %s", 
+                        bike.getId(), 
+                        bike.getWeight(), 
+                        bike.getType()));
+                }
+                
+                return this;
+            }
         });
+        mainPanel.add(bikeCombo, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.gridwidth = 2;
+        JButton newBikeButton = new JButton("Nouveau vélo");
+        newBikeButton.addActionListener(e -> showNewBikeDialog());
+        mainPanel.add(newBikeButton, gbc);
+        
+        add(mainPanel, BorderLayout.CENTER);
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        JButton backButton = new JButton("Retour");
+        backButton.addActionListener(e -> {
+            dispose();
+            new RideCalendarFrame(member).setVisible(true);
+        });
+        
+        JButton reserveButton = new JButton("Réserver");
+        reserveButton.addActionListener(e -> reserveSpot());
+        
+        buttonPanel.add(backButton);
+        buttonPanel.add(reserveButton);
+        add(buttonPanel, BorderLayout.SOUTH);
     }
-
+    
+    private void loadVehicles() {
+        try {
+            Map<Integer, Vehicle> vehicleMap = ride.getVehicles().stream()
+                .collect(Collectors.toMap(Vehicle::getId, v -> v, (v1, v2) -> v1));
+            
+            vehicleCombo.removeAllItems();
+            vehicleCombo.addItem(null);
+            
+            for (Vehicle vehicle : vehicleMap.values()) {
+                vehicleCombo.addItem(vehicle);
+            }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erreur lors du chargement des conducteurs",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
     private void loadMemberBikes() {
         try {
-            List<Bike> bikes = bikeDAO.findByMember(member);
+            List<Bike> memberBikes = bikeDAO.findByMember(member);
+            
             bikeCombo.removeAllItems();
+            bikeCombo.addItem(null);
             
-            if (!bikes.isEmpty()) {
-                for (Bike bike : bikes) {
-                    bikeCombo.addItem(bike);
-                }
-            } else {
-                bikeCombo.addItem(new Bike());
+            for (Bike bike : memberBikes) {
+                bikeCombo.addItem(bike);
             }
+            
         } catch (DAOException e) {
-            JOptionPane.showMessageDialog(this, 
-                e.getUserMessage(),
-                "Erreur",
-                JOptionPane.ERROR_MESSAGE);
-        } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Une erreur inattendue est survenue.",
+                e.getUserMessage(),
                 "Erreur",
                 JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    private void loadAvailableDrivers() {
-        try {
-            ride.setVehicles(vehicleDAO.findVehiclesForRide(ride.getId()));
-            ride.setInscriptions(new HashSet<>(inscriptionDAO.findByRide(ride.getId())));
-            
-            driverCombo.removeAllItems();
-            driverToVehicleMap.clear();
-
-            if (ride.getVehicles().isEmpty()) {
-                driverCombo.addItem("Aucun conducteur disponible");
-                vehicleDetailsArea.setText("Aucun véhicule disponible pour cette sortie.\nVous pouvez proposer votre propre véhicule !");
-                chkBringBike.setEnabled(false);
-                return;
-            }
-
-            driverCombo.addItem("-- Choisir un conducteur --");
-
-            for (Vehicle vehicle : ride.getVehicles()) {
-                if (vehicle.getOwner() != null) {
-                    Member driver = vehicle.getOwner();
-                    
-                    int availableSeats = ride.getAvailableSeatsForVehicle(vehicle);
-                    
-                    if (availableSeats > 0) {
-                        String driverDisplay = driver.getFirstname() + " " + driver.getName();
-                        
-                        driverCombo.addItem(driverDisplay);
-                        driverToVehicleMap.put(driverDisplay, vehicle);
-                    }
-                }
-            }
-
-            if (driverCombo.getItemCount() == 1) {
-                driverCombo.addItem("Aucun conducteur avec des places disponibles");
-                chkBringBike.setEnabled(false);
-            }
-        } catch (DAOException e) {
-            JOptionPane.showMessageDialog(this, 
-                e.getUserMessage(),
-                "Erreur",
-                JOptionPane.ERROR_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                "Une erreur inattendue est survenue.",
-                "Erreur",
-                JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void updateVehicleDetails() {
-        String selectedDriver = (String) driverCombo.getSelectedItem();
+    
+    private void updateAvailableSpots() {
+        Vehicle selectedVehicle = (Vehicle) vehicleCombo.getSelectedItem();
         
-        if (selectedDriver == null || selectedDriver.startsWith("--") || selectedDriver.contains("Aucun")) {
-            vehicleDetailsArea.setText("");
-            chkBringBike.setEnabled(false);
-            chkBringBike.setSelected(false);
-            bikeCombo.setEnabled(false);
-            btnNewBike.setEnabled(false);
+        if (selectedVehicle == null) {
+            availableSeatsLabel.setText("Places disponibles: -");
+            availableBikeSpotsLabel.setText("Places vélos disponibles: -");
             return;
         }
-
-        Vehicle selectedVehicle = driverToVehicleMap.get(selectedDriver);
         
-        if (selectedVehicle != null) {
-            try {
-                StringBuilder details = new StringBuilder();
-                
-                Member driver = selectedVehicle.getOwner();
-                
-                int totalSeats = selectedVehicle.getSeatNumber() - 1;
-                int usedSeats = ride.getUsedSeatsForVehicle(selectedVehicle.getId());
-                int availableSeats = ride.getAvailableSeatsForVehicle(selectedVehicle);
-                
-                int totalBikeSpots = selectedVehicle.getBikeSpotNumber();
-                int usedBikeSpots = ride.getUsedBikeSpotsForVehicle(selectedVehicle.getId());
-                int availableBikeSpots = ride.getAvailableBikeSpotsForVehicle(selectedVehicle);
-                
-                details.append("Conducteur: ").append(driver.getFirstname()).append(" ").append(driver.getName()).append("\n");
-                details.append("Téléphone: ").append(driver.getTel().isEmpty() ? "Non renseigné" : driver.getTel()).append("\n");
-                details.append("\n");
-                details.append("═══ PLACES PASSAGERS ═══\n");
-                details.append("Capacité totale: ").append(totalSeats).append(" place(s)\n");
-                details.append("Places occupées: ").append(usedSeats).append(" passager(s)\n");
-                details.append("Places disponibles: ").append(availableSeats).append(" place(s)\n");
-                details.append("\n");
-                details.append("═══ PLACES VÉLOS ═══\n");
-                details.append("Capacité totale: ").append(totalBikeSpots).append(" vélo(s)\n");
-                details.append("Places occupées: ").append(usedBikeSpots).append(" vélo(s)\n");
-                details.append("Places disponibles: ").append(availableBikeSpots).append(" vélo(s)");
-                
-                vehicleDetailsArea.setText(details.toString());
-                
-                if (availableBikeSpots > 0) {
-                    chkBringBike.setEnabled(true);
-                    chkBringBike.setToolTipText(null);
-                } else {
-                    chkBringBike.setEnabled(false);
-                    chkBringBike.setSelected(false);
-                    bikeCombo.setEnabled(false);
-                    btnNewBike.setEnabled(false);
-                    chkBringBike.setToolTipText("Aucune place disponible pour les vélos dans ce véhicule");
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this,
-                    "Une erreur est survenue lors de l'affichage des détails.",
-                    "Erreur",
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        }
+        int availableSeats = ride.getAvailableSeatsForVehicle(selectedVehicle);
+        int availableBikeSpots = ride.getAvailableBikeSpotsForVehicle(selectedVehicle);
+        
+        availableSeatsLabel.setText("Places disponibles: " + availableSeats + "/" + (selectedVehicle.getSeatNumber() - 1));
+        availableBikeSpotsLabel.setText("Places vélos disponibles: " + availableBikeSpots + "/" + selectedVehicle.getBikeSpotNumber());
     }
-
+    
+    private void updateBikeComboState() {
+        bikeCombo.setEnabled(bringBikeCheckBox.isSelected());
+    }
+    
     private void showNewBikeDialog() {
         JTextField weightField = new JTextField(5);
         JTextField typeField = new JTextField(10);
@@ -287,7 +232,8 @@ public class ReserveSpotFrame extends JFrame {
         panel.add(new JLabel("Longueur (cm):"));
         panel.add(lengthField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Nouveau vélo", JOptionPane.OK_CANCEL_OPTION);
+        int result = JOptionPane.showConfirmDialog(this, panel, 
+            "Nouveau vélo", JOptionPane.OK_CANCEL_OPTION);
         
         if (result == JOptionPane.OK_OPTION) {
             try {
@@ -295,121 +241,99 @@ public class ReserveSpotFrame extends JFrame {
                 String type = typeField.getText();
                 double length = Double.parseDouble(lengthField.getText());
                 
-                if (type.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Le type de vélo est obligatoire");
-                    return;
-                }
-                
                 Bike newBike = new Bike(0, weight, type, length, member);
+                
                 if (bikeDAO.create(newBike)) {
                     loadMemberBikes();
                     
-                    List<Bike> bikes = bikeDAO.findByMember(member);
-                    if (!bikes.isEmpty()) {
-                        bikeCombo.setSelectedItem(bikes.get(bikes.size() - 1));
+                    for (int i = 0; i < bikeCombo.getItemCount(); i++) {
+                        Bike bike = bikeCombo.getItemAt(i);
+                        if (bike != null && bike.getId() == newBike.getId()) {
+                            bikeCombo.setSelectedIndex(i);
+                            break;
+                        }
                     }
                     
                     JOptionPane.showMessageDialog(this, "Vélo créé avec succès!");
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Veuillez entrer des valeurs numériques valides");
-            } catch (DAOException ex) {
-                JOptionPane.showMessageDialog(this, 
-                    ex.getUserMessage(),
-                    "Erreur",
-                    JOptionPane.ERROR_MESSAGE);
-            } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
-                    "Une erreur inattendue est survenue.",
+                    "Veuillez entrer des valeurs numériques valides",
+                    "Erreur de saisie",
+                    JOptionPane.WARNING_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this,
+                    ex.getMessage(),
+                    "Validation échouée",
+                    JOptionPane.WARNING_MESSAGE);
+            } catch (DAOException ex) {
+                JOptionPane.showMessageDialog(this,
+                    ex.getUserMessage(),
                     "Erreur",
                     JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-
-    private void submitReservation() {
-        String selectedDriver = (String) driverCombo.getSelectedItem();
-        boolean bringBike = chkBringBike.isSelected();
-        Bike selectedBike = bringBike ? (Bike) bikeCombo.getSelectedItem() : null;
-
-        if (selectedDriver == null || selectedDriver.startsWith("--") || selectedDriver.contains("Aucun")) {
-            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un conducteur");
-            return;
-        }
-
-        Vehicle selectedVehicle = driverToVehicleMap.get(selectedDriver);
-        
-        if (selectedVehicle == null) {
-            JOptionPane.showMessageDialog(this, "Le conducteur sélectionné n'est plus disponible");
-            return;
-        }
-
-        if (bringBike && (selectedBike == null || selectedBike.getId() == 0)) {
-            JOptionPane.showMessageDialog(this, "Veuillez sélectionner ou créer un vélo");
-            return;
-        }
-
+    
+    private void reserveSpot() {
         try {
-            int availableSeats = ride.getAvailableSeatsForVehicle(selectedVehicle);
-            int availableBikeSpots = ride.getAvailableBikeSpotsForVehicle(selectedVehicle);
+            Vehicle selectedVehicle = (Vehicle) vehicleCombo.getSelectedItem();
             
-            if (availableSeats <= 0) {
-                JOptionPane.showMessageDialog(this, "Ce véhicule n'a plus de places passagers disponibles");
-                loadAvailableDrivers();
+            if (selectedVehicle == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Veuillez sélectionner un conducteur",
+                    "Sélection requise",
+                    JOptionPane.WARNING_MESSAGE);
                 return;
             }
-
-            if (bringBike && availableBikeSpots <= 0) {
-                JOptionPane.showMessageDialog(this, "Ce véhicule n'a plus de places pour vélos");
-                return;
+            
+            boolean hasBike = bringBikeCheckBox.isSelected();
+            Bike selectedBike = null;
+            
+            if (hasBike) {
+                selectedBike = (Bike) bikeCombo.getSelectedItem();
+                if (selectedBike == null) {
+                    JOptionPane.showMessageDialog(this,
+                        "Veuillez sélectionner un vélo ou créer un nouveau vélo",
+                        "Sélection requise",
+                        JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
             }
-
-            if (!ride.hasAvailablePassengerSpots()) {
-                JOptionPane.showMessageDialog(this, "Cette sortie n'a plus de places passagers disponibles");
-                loadAvailableDrivers();
-                return;
-            }
-
-            if (bringBike && !ride.hasAvailableBikeSpots()) {
-                JOptionPane.showMessageDialog(this, "Cette sortie n'a plus de places pour vélos");
-                return;
-            }
-
-            Inscription inscription = new Inscription(0, true, bringBike, member, ride);
+            
+            Inscription inscription = new Inscription(0, true, hasBike, member, ride);
             inscription.setVehicle(selectedVehicle);
             
-            if (bringBike && selectedBike != null) {
+            if (hasBike) {
                 inscription.setBike(selectedBike);
             }
             
-            if (!inscriptionDAO.create(inscription)) {
-                JOptionPane.showMessageDialog(this, "Erreur lors de la création de la réservation");
-                return;
-            }
-
-            Member driver = selectedVehicle.getOwner();
+            ride.validateInscription(inscription);
             
-            String message = "Place réservée avec succès!\n\n" +
-                "Conducteur: " + driver.getFirstname() + " " + driver.getName() + "\n" +
-                "Contact: " + (driver.getTel().isEmpty() ? "À demander" : driver.getTel()) + "\n";
-            
-            if (bringBike) {
-                message += "\nVotre vélo: " + selectedBike.getType() + " (" + selectedBike.getWeight() + " kg)";
+            if (inscriptionDAO.create(inscription)) {
+                JOptionPane.showMessageDialog(this,
+                    "Place réservée avec succès !",
+                    "Succès",
+                    JOptionPane.INFORMATION_MESSAGE);
+                dispose();
+                new RideCalendarFrame(member).setVisible(true);
             }
             
-            JOptionPane.showMessageDialog(this, message);
-            
-            dispose();
-            new MemberDashboardFrame(member).setVisible(true);
-
-        } catch (DAOException e) {
-            JOptionPane.showMessageDialog(this, 
-                e.getUserMessage(),
-                "Erreur",
-                JOptionPane.ERROR_MESSAGE);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this,
-                "Une erreur inattendue est survenue.",
+                e.getMessage(),
+                "Validation échouée",
+                JOptionPane.WARNING_MESSAGE);
+                
+        } catch (IllegalStateException e) {
+            JOptionPane.showMessageDialog(this,
+                e.getMessage(),
+                "Inscription impossible",
+                JOptionPane.WARNING_MESSAGE);
+                
+        } catch (DAOException e) {
+            JOptionPane.showMessageDialog(this,
+                e.getUserMessage(),
                 "Erreur",
                 JOptionPane.ERROR_MESSAGE);
         }

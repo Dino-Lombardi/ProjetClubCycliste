@@ -1,14 +1,10 @@
 package be.Lombardi.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import be.Lombardi.pojo.Member;
-import be.Lombardi.pojo.Vehicle;
+import be.Lombardi.pojo.*;
 
 public class VehicleDAO extends DAO<Vehicle> {
 
@@ -17,22 +13,32 @@ public class VehicleDAO extends DAO<Vehicle> {
     }
 
     @Override
-    public boolean create(Vehicle vehicle) {
+    public boolean create(Vehicle vehicle) throws DAOException {
         final String SQL = "INSERT INTO Vehicle (seat_number, bike_spot_number, owner_id) VALUES (?, ?, ?)";
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+        try (PreparedStatement ps = connect.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, vehicle.getSeatNumber());
             ps.setInt(2, vehicle.getBikeSpotNumber());
             ps.setInt(3, vehicle.getOwner().getId());
             
-            return ps.executeUpdate() > 0;
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        vehicle.setId(rs.getInt(1));
+                    }
+                }
+                return true;
+            }
+            return false;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la création du véhicule", e);
         }
     }
 
     @Override
-    public boolean delete(Vehicle vehicle) {
+    public boolean delete(Vehicle vehicle) throws DAOException {
         final String SQL = "DELETE FROM Vehicle WHERE vehicle_id = ?";
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
@@ -44,14 +50,19 @@ public class VehicleDAO extends DAO<Vehicle> {
     }
 
     @Override
-    public boolean update(Vehicle vehicle) {
-        final String SQL = "UPDATE Vehicle SET seat_number = ?, bike_spot_number = ?, owner_id = ? WHERE vehicle_id = ?";
+    public boolean update(Vehicle vehicle) throws DAOException {
+        final String SQL = """
+            UPDATE Vehicle
+            SET seat_number = ?, bike_spot_number = ?, owner_id = ?
+            WHERE vehicle_id = ?
+            """;
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setInt(1, vehicle.getSeatNumber());
             ps.setInt(2, vehicle.getBikeSpotNumber());
             ps.setInt(3, vehicle.getOwner().getId());
             ps.setInt(4, vehicle.getId());
+            
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la mise à jour du véhicule", e);
@@ -59,7 +70,7 @@ public class VehicleDAO extends DAO<Vehicle> {
     }
 
     @Override
-    public Vehicle find(int id) {
+    public Vehicle find(int id) throws DAOException {
         final String SQL = """
             SELECT v.vehicle_id, v.seat_number, v.bike_spot_number, v.owner_id,
                    p.name, p.firstname, p.tel, p.username,
@@ -72,14 +83,15 @@ public class VehicleDAO extends DAO<Vehicle> {
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setInt(1, id);
+            
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Member owner = new Member(
                         rs.getInt("owner_id"),
-                        rs.getString("name"),
-                        rs.getString("firstname"),
-                        rs.getString("tel"),
-                        rs.getString("username"),
+                        getSafe(rs, "name"),
+                        getSafe(rs, "firstname"),
+                        getSafe(rs, "tel"),
+                        getSafe(rs, "username"),
                         rs.getDouble("balance")
                     );
                     
@@ -98,12 +110,14 @@ public class VehicleDAO extends DAO<Vehicle> {
         return null;
     }
 
-    public List<Vehicle> findByMember(Member member) {
+    public List<Vehicle> findByMember(Member member) throws DAOException {
         final String SQL = "SELECT vehicle_id, seat_number, bike_spot_number FROM Vehicle WHERE owner_id = ?";
+        
         List<Vehicle> vehicles = new ArrayList<>();
         
         try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setInt(1, member.getId());
+            
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Vehicle vehicle = new Vehicle(
@@ -112,58 +126,23 @@ public class VehicleDAO extends DAO<Vehicle> {
                         rs.getInt("bike_spot_number"),
                         member
                     );
+                    
                     vehicles.add(vehicle);
                 }
             }
         } catch (SQLException e) {
-            throw new DAOException("Erreur lors de la recherche des véhicules", e);
+            throw new DAOException("Erreur lors de la recherche des véhicules du membre", e);
         }
         
         return vehicles;
     }
 
-    public List<Vehicle> findVehiclesForRide(int rideId) {
-        final String SQL = """
-            SELECT DISTINCT v.vehicle_id, v.seat_number, v.bike_spot_number, v.owner_id,
-                   p.name, p.firstname, p.tel, p.username,
-                   m.balance
-            FROM Vehicle v
-            JOIN Inscription i ON v.vehicle_id = i.vehicle_id
-            JOIN Member m ON v.owner_id = m.person_id
-            JOIN Person p ON m.person_id = p.person_id
-            WHERE i.ride_id = ?
-            AND i.vehicle_id IS NOT NULL
-            """;
-        
-        List<Vehicle> vehicles = new ArrayList<>();
-        
-        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
-            ps.setInt(1, rideId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Member owner = new Member(
-                        rs.getInt("owner_id"),
-                        rs.getString("name"),
-                        rs.getString("firstname"),
-                        rs.getString("tel"),
-                        rs.getString("username"),
-                        rs.getDouble("balance")
-                    );
-                    
-                    Vehicle vehicle = new Vehicle(
-                        rs.getInt("vehicle_id"),
-                        rs.getInt("seat_number"),
-                        rs.getInt("bike_spot_number"),
-                        owner
-                    );
-                    
-                    vehicles.add(vehicle);
-                }
-            }
+    private String getSafe(ResultSet rs, String col) {
+        try {
+            String v = rs.getString(col);
+            return v != null ? v : "";
         } catch (SQLException e) {
-            throw new DAOException("Erreur lors de la recherche des véhicules pour la sortie", e);
+            return "";
         }
-        
-        return vehicles;
     }
 }

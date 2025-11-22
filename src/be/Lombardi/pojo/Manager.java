@@ -12,6 +12,15 @@ public class Manager extends Person {
         this.category = category;
     }
 
+    @Override
+    public void validate() {
+        super.validate();
+        
+        if (category == null) {
+            throw new IllegalArgumentException("La catégorie est obligatoire pour un manager");
+        }
+    }
+
     public CategoryType getCategory() {
         return category;
     }
@@ -26,7 +35,7 @@ public class Manager extends Person {
                "id=" + getId() +
                ", name='" + getName() + '\'' +
                ", firstname='" + getFirstname() + '\'' +
-               ", category=" + getCategory() +
+               ", category=" + category +
                '}';
     }
 
@@ -36,13 +45,13 @@ public class Manager extends Person {
         if (obj == null || getClass() != obj.getClass()) return false;
         if (!super.equals(obj)) return false;
         Manager manager = (Manager) obj;
-        return getCategory() == manager.getCategory();
+        return category == manager.category;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (getCategory() != null ? getCategory().hashCode() : 0);
+        result = 31 * result + (category != null ? category.hashCode() : 0);
         return result;
     }
 }

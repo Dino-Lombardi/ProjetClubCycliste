@@ -29,6 +29,15 @@ public class Member extends Person {
         this.inscriptions = new ArrayList<>();
     }
 
+    @Override
+    public void validate() {
+        super.validate();
+        
+        if (balance < 0) {
+            throw new IllegalArgumentException("Le solde ne peut pas être négatif");
+        }
+    }
+
     public double getBalance() {
         return balance;
     }
@@ -87,8 +96,8 @@ public class Member extends Person {
                "id=" + getId() +
                ", name='" + getName() + '\'' +
                ", firstname='" + getFirstname() + '\'' +
-               ", balance=" + getBalance() +
-               ", categories=" + getCategories() +
+               ", balance=" + balance +
+               ", categories=" + categories +
                '}';
     }
 
@@ -98,13 +107,13 @@ public class Member extends Person {
         if (obj == null || getClass() != obj.getClass()) return false;
         if (!super.equals(obj)) return false;
         Member member = (Member) obj;
-        return Double.compare(member.getBalance(), getBalance()) == 0;
+        return Double.compare(member.balance, balance) == 0;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + Double.hashCode(getBalance());
+        result = 31 * result + Double.hashCode(balance);
         return result;
     }
 }

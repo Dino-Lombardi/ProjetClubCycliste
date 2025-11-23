@@ -45,28 +45,36 @@ public class ReserveSpotFrame extends JFrame {
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
+
+        // Ligne 0 -- titre
+        GridBagConstraints gbcTitle = new GridBagConstraints();
+        gbcTitle.gridx = 0; gbcTitle.gridy = 0; gbcTitle.gridwidth = 2;
+        gbcTitle.insets = new Insets(5, 5, 5, 5);
+        gbcTitle.fill = GridBagConstraints.HORIZONTAL;
         JLabel titleLabel = new JLabel("Réserver une place passager", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        mainPanel.add(titleLabel, gbc);
-        
-        gbc.gridy = 1;
+        mainPanel.add(titleLabel, gbcTitle);
+
+        // Ligne 1 -- infos sortie
+        GridBagConstraints gbcRide = new GridBagConstraints();
+        gbcRide.gridx = 0; gbcRide.gridy = 1; gbcRide.gridwidth = 2;
+        gbcRide.insets = new Insets(5, 5, 5, 5);
+        gbcRide.fill = GridBagConstraints.HORIZONTAL;
         JLabel rideInfoLabel = new JLabel("Sortie: " + ride.getStartPlace() + " - " + ride.getStartDate().toLocalDate());
-        mainPanel.add(rideInfoLabel, gbc);
-        
-        gbc.gridwidth = 1;
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        mainPanel.add(new JLabel("Sélectionner un conducteur:"), gbc);
-        
-        gbc.gridx = 1;
+        mainPanel.add(rideInfoLabel, gbcRide);
+
+        // Ligne 2 -- label conducteur
+        GridBagConstraints gbcDriverLabel = new GridBagConstraints();
+        gbcDriverLabel.gridx = 0; gbcDriverLabel.gridy = 2;
+        gbcDriverLabel.insets = new Insets(5, 5, 5, 5);
+        gbcDriverLabel.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(new JLabel("Sélectionner un conducteur:"), gbcDriverLabel);
+
+        // Ligne 2 -- combo véhicule conducteur
+        GridBagConstraints gbcVehCombo = new GridBagConstraints();
+        gbcVehCombo.gridx = 1; gbcVehCombo.gridy = 2;
+        gbcVehCombo.insets = new Insets(5, 5, 5, 5);
+        gbcVehCombo.fill = GridBagConstraints.HORIZONTAL;
         vehicleCombo = new JComboBox<>();
         vehicleCombo.addActionListener(e -> updateAvailableSpots());
         vehicleCombo.setRenderer(new DefaultListCellRenderer() {
@@ -90,29 +98,45 @@ public class ReserveSpotFrame extends JFrame {
                 return this;
             }
         });
-        mainPanel.add(vehicleCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
+        mainPanel.add(vehicleCombo, gbcVehCombo);
+
+        // Ligne 3 -- places dispo
+        GridBagConstraints gbcPlaceDispo = new GridBagConstraints();
+        gbcPlaceDispo.gridx = 0; gbcPlaceDispo.gridy = 3; gbcPlaceDispo.gridwidth = 2;
+        gbcPlaceDispo.insets = new Insets(5, 5, 5, 5);
+        gbcPlaceDispo.fill = GridBagConstraints.HORIZONTAL;
         availableSeatsLabel = new JLabel("Places disponibles: -");
-        mainPanel.add(availableSeatsLabel, gbc);
-        
-        gbc.gridy = 4;
+        mainPanel.add(availableSeatsLabel, gbcPlaceDispo);
+
+        // Ligne 4 -- places vélos dispo
+        GridBagConstraints gbcPlaceVeloDispo = new GridBagConstraints();
+        gbcPlaceVeloDispo.gridx = 0; gbcPlaceVeloDispo.gridy = 4; gbcPlaceVeloDispo.gridwidth = 2;
+        gbcPlaceVeloDispo.insets = new Insets(5, 5, 5, 5);
+        gbcPlaceVeloDispo.fill = GridBagConstraints.HORIZONTAL;
         availableBikeSpotsLabel = new JLabel("Places vélos disponibles: -");
-        mainPanel.add(availableBikeSpotsLabel, gbc);
-        
-        gbc.gridy = 5;
+        mainPanel.add(availableBikeSpotsLabel, gbcPlaceVeloDispo);
+
+        // Ligne 5 -- check amène vélo
+        GridBagConstraints gbcBringBikeChx = new GridBagConstraints();
+        gbcBringBikeChx.gridx = 0; gbcBringBikeChx.gridy = 5; gbcBringBikeChx.gridwidth = 2;
+        gbcBringBikeChx.insets = new Insets(5, 5, 5, 5);
+        gbcBringBikeChx.fill = GridBagConstraints.HORIZONTAL;
         bringBikeCheckBox = new JCheckBox("J'amène un vélo");
         bringBikeCheckBox.addActionListener(e -> updateBikeComboState());
-        mainPanel.add(bringBikeCheckBox, gbc);
-        
-        gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        mainPanel.add(new JLabel("Sélectionner un vélo:"), gbc);
-        
-        gbc.gridx = 1;
+        mainPanel.add(bringBikeCheckBox, gbcBringBikeChx);
+
+        // Ligne 6 -- label vélo
+        GridBagConstraints gbcLabelVelo = new GridBagConstraints();
+        gbcLabelVelo.gridx = 0; gbcLabelVelo.gridy = 6;
+        gbcLabelVelo.insets = new Insets(5, 5, 5, 5);
+        gbcLabelVelo.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(new JLabel("Sélectionner un vélo:"), gbcLabelVelo);
+
+        // Ligne 6 -- combo vélo
+        GridBagConstraints gbcComboVelo = new GridBagConstraints();
+        gbcComboVelo.gridx = 1; gbcComboVelo.gridy = 6;
+        gbcComboVelo.insets = new Insets(5, 5, 5, 5);
+        gbcComboVelo.fill = GridBagConstraints.HORIZONTAL;
         bikeCombo = new JComboBox<>();
         bikeCombo.setEnabled(false);
         bikeCombo.setRenderer(new DefaultListCellRenderer() {
@@ -129,32 +153,33 @@ public class ReserveSpotFrame extends JFrame {
                         bike.getWeight(), 
                         bike.getType()));
                 }
-                
                 return this;
             }
         });
-        mainPanel.add(bikeCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        gbc.gridwidth = 2;
+        mainPanel.add(bikeCombo, gbcComboVelo);
+
+        // Ligne 7 -- bouton nouveau vélo
+        GridBagConstraints gbcNewBike = new GridBagConstraints();
+        gbcNewBike.gridx = 0; gbcNewBike.gridy = 7; gbcNewBike.gridwidth = 2;
+        gbcNewBike.insets = new Insets(5, 5, 5, 5);
+        gbcNewBike.fill = GridBagConstraints.HORIZONTAL;
         JButton newBikeButton = new JButton("Nouveau vélo");
         newBikeButton.addActionListener(e -> showNewBikeDialog());
-        mainPanel.add(newBikeButton, gbc);
-        
+        mainPanel.add(newBikeButton, gbcNewBike);
+
         add(mainPanel, BorderLayout.CENTER);
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
+
         JButton backButton = new JButton("Retour");
         backButton.addActionListener(e -> {
             dispose();
             new RideCalendarFrame(member).setVisible(true);
         });
-        
+
         JButton reserveButton = new JButton("Réserver");
         reserveButton.addActionListener(e -> reserveSpot());
-        
+
         buttonPanel.add(backButton);
         buttonPanel.add(reserveButton);
         add(buttonPanel, BorderLayout.SOUTH);

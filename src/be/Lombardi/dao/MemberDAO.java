@@ -14,14 +14,17 @@ public class MemberDAO extends DAO<Member> {
 
     @Override
     public boolean create(Member member) throws DAOException {
-        final String SQL_PERSON = "INSERT INTO Person (name, firstname, tel, username) VALUES (?, ?, ?, ?)";
+        final String SQL_PERSON = "INSERT INTO Person (name, firstname, tel, username, password, role) VALUES (?, ?, ?, ?, ?, ?)";
         final String SQL_MEMBER = "INSERT INTO Member (person_id, balance) VALUES (?, ?)";
+        final String SQL_CATEGORY = "INSERT INTO MemberCategory (person_id, category) VALUES (?, ?)";
         
         try (PreparedStatement psPerson = connect.prepareStatement(SQL_PERSON, Statement.RETURN_GENERATED_KEYS)) {
             psPerson.setString(1, member.getName());
             psPerson.setString(2, member.getFirstname());
             psPerson.setString(3, member.getTel());
             psPerson.setString(4, member.getUsername());
+            psPerson.setString(5, member.getPassword());
+            psPerson.setString(6, "MEMBER");
             
             int rowsAffected = psPerson.executeUpdate();
             
@@ -29,13 +32,22 @@ public class MemberDAO extends DAO<Member> {
                 try (ResultSet rs = psPerson.getGeneratedKeys()) {
                     if (rs.next()) {
                         int personId = rs.getInt(1);
-                        member.setId(personId);
                         
                         try (PreparedStatement psMember = connect.prepareStatement(SQL_MEMBER)) {
                             psMember.setInt(1, personId);
                             psMember.setDouble(2, member.getBalance());
-                            return psMember.executeUpdate() > 0;
+                            psMember.executeUpdate();
                         }
+                        
+                        try (PreparedStatement psCategory = connect.prepareStatement(SQL_CATEGORY)) {
+                            for (CategoryType category : member.getCategories()) {
+                                psCategory.setInt(1, personId);
+                                psCategory.setString(2, category.toString());
+                                psCategory.executeUpdate();
+                            }
+                        }
+                        
+                        return true;
                     }
                 }
             }
@@ -61,7 +73,7 @@ public class MemberDAO extends DAO<Member> {
     public boolean update(Member member) throws DAOException {
         final String SQL_PERSON = """
             UPDATE Person
-            SET name = ?, firstname = ?, tel = ?, username = ?
+            SET name = ?, firstname = ?, tel = ?, username = ?, password = ?
             WHERE person_id = ?
             """;
         final String SQL_MEMBER = "UPDATE Member SET balance = ? WHERE person_id = ?";
@@ -71,7 +83,8 @@ public class MemberDAO extends DAO<Member> {
             psPerson.setString(2, member.getFirstname());
             psPerson.setString(3, member.getTel());
             psPerson.setString(4, member.getUsername());
-            psPerson.setInt(5, member.getId());
+            psPerson.setString(5, member.getPassword());
+            psPerson.setInt(6, member.getId());
             
             int rowsAffected = psPerson.executeUpdate();
             

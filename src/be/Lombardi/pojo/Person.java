@@ -8,15 +8,25 @@ public abstract class Person {
     private String firstname;
     private String tel;
     private String username;
+    private String password;
 
     public Person() {}
 
-    public Person(int id, String name, String firstname, String tel, String username) {
+    public Person(int id, String name, String firstname, String tel, String username, String password) {
         this.id = id;
         this.name = name;
         this.firstname = firstname;
         this.tel = tel;
         this.username = username;
+		this.password = password;
+	}
+    
+    public Person(int id, String name, String firstname, String tel, String username) {
+		this.id = id;
+    	this.name = name;
+		this.firstname = firstname;
+		this.tel = tel;
+		this.username = username;
     }
 
     public void validate() {
@@ -46,6 +56,10 @@ public abstract class Person {
         if (username.trim().length() < 3) {
             throw new IllegalArgumentException("Le nom d'utilisateur doit contenir au moins 3 caractères");
         }
+        
+        if (password.trim().isEmpty()) {
+			throw new IllegalArgumentException("Le mot de passe est obligatoire");
+		}
     }
 
     public int getId() {
@@ -86,6 +100,14 @@ public abstract class Person {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+    
+    public String getPassword() {
+		return password;
+	}
+    
+    public void setPassword(String password) {
+    	this.password = password;
     }
 
     public String getFullName() {

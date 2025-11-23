@@ -32,6 +32,8 @@ import be.Lombardi.dao.PersonDAO;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class LoginFrame extends JFrame {
 
@@ -68,17 +70,17 @@ public class LoginFrame extends JFrame {
     }
 
     private void initUI() {
-        setLayout(new BorderLayout(0, 15));
+        getContentPane().setLayout(new BorderLayout(0, 15));
         ((JComponent) getContentPane()).setBorder(new EmptyBorder(20, 40, 20, 40));
 
         JLabel header = new JLabel("Connexion", SwingConstants.CENTER);
         header.setFont(new Font("SansSerif", Font.BOLD, 22));
         header.setForeground(new Color(40, 60, 120));
-        add(header, BorderLayout.NORTH);
+        getContentPane().add(header, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        add(centerPanel, BorderLayout.CENTER);
+        getContentPane().add(centerPanel, BorderLayout.CENTER);
 
         usernameField = new JTextField("Nom d'utilisateur");
         usernameField.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -147,11 +149,20 @@ public class LoginFrame extends JFrame {
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(loginButton);
         centerPanel.add(Box.createVerticalGlue());
+        
+        JButton btnNewButton = new JButton("S'inscrire");
+        btnNewButton.addActionListener(e -> {
+			dispose();
+			new CreateMemberFrame().setVisible(true);
+		});
+        btnNewButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        btnNewButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        centerPanel.add(btnNewButton);
 
         JLabel footer = new JLabel("© Club Cyclistes 2025 - Lombardi Dino", SwingConstants.CENTER);
         footer.setFont(new Font("SansSerif", Font.PLAIN, 12));
         footer.setForeground(Color.GRAY);
-        add(footer, BorderLayout.SOUTH);
+        getContentPane().add(footer, BorderLayout.SOUTH);
     }
 
     private void handleLogin() {

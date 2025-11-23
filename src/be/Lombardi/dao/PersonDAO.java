@@ -11,31 +11,26 @@ public class PersonDAO extends DAO<Person> {
         super(conn);
     }
 
+    
+    // Cette méthode est juste là au cas où on voudrait créer une Personne qui n'a pas de rôle
     @Override
     public boolean create(Person person) throws DAOException {
-        final String SQL = "INSERT INTO Person (name, firstname, tel, username) VALUES (?, ?, ?, ?)";
+        final String SQL = "INSERT INTO Person (name, firstname, tel, username, password, role) VALUES (?, ?, ?, ?, ?, ?)";
         
-        try (PreparedStatement ps = connect.prepareStatement(SQL, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
             ps.setString(1, person.getName());
             ps.setString(2, person.getFirstname());
             ps.setString(3, person.getTel());
             ps.setString(4, person.getUsername());
+            ps.setString(5, person.getPassword());
+            ps.setString(6, "PERSON");
             
-            int rowsAffected = ps.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        person.setId(rs.getInt(1));
-                    }
-                }
-                return true;
+            return ps.executeUpdate() > 0;
             }
-            return false;
-        } catch (SQLException e) {
+        catch (SQLException e) {
             throw new DAOException("Erreur lors de la création de la personne", e);
         }
-    }
+    } 
 
     @Override
     public boolean delete(Person person) throws DAOException {

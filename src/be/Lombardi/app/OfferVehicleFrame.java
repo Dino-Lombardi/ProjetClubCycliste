@@ -43,28 +43,36 @@ public class OfferVehicleFrame extends JFrame {
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
+
+        // Ligne 0
+        GridBagConstraints gbcTitle = new GridBagConstraints();
+        gbcTitle.gridx = 0; gbcTitle.gridy = 0; gbcTitle.gridwidth = 2;
+        gbcTitle.insets = new Insets(5, 5, 5, 5);
+        gbcTitle.fill = GridBagConstraints.HORIZONTAL;
         JLabel titleLabel = new JLabel("Proposer un véhicule", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        mainPanel.add(titleLabel, gbc);
-        
-        gbc.gridy = 1;
+        mainPanel.add(titleLabel, gbcTitle);
+
+        // Ligne 1
+        GridBagConstraints gbcRide = new GridBagConstraints();
+        gbcRide.gridx = 0; gbcRide.gridy = 1; gbcRide.gridwidth = 2;
+        gbcRide.insets = new Insets(5, 5, 5, 5);
+        gbcRide.fill = GridBagConstraints.HORIZONTAL;
         JLabel rideInfoLabel = new JLabel("Sortie: " + ride.getStartPlace() + " - " + ride.getStartDate().toLocalDate());
-        mainPanel.add(rideInfoLabel, gbc);
-        
-        gbc.gridwidth = 1;
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        mainPanel.add(new JLabel("Sélectionner un véhicule:"), gbc);
-        
-        gbc.gridx = 1;
+        mainPanel.add(rideInfoLabel, gbcRide);
+
+        // Ligne 2 -- label
+        GridBagConstraints gbcVehLabel = new GridBagConstraints();
+        gbcVehLabel.gridx = 0; gbcVehLabel.gridy = 2; 
+        gbcVehLabel.insets = new Insets(5, 5, 5, 5);
+        gbcVehLabel.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(new JLabel("Sélectionner un véhicule:"), gbcVehLabel);
+
+        // Ligne 2 -- combo
+        GridBagConstraints gbcVehCombo = new GridBagConstraints();
+        gbcVehCombo.gridx = 1; gbcVehCombo.gridy = 2;
+        gbcVehCombo.insets = new Insets(5, 5, 5, 5);
+        gbcVehCombo.fill = GridBagConstraints.HORIZONTAL;
         vehicleCombo = new JComboBox<>();
         vehicleCombo.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -80,32 +88,41 @@ public class OfferVehicleFrame extends JFrame {
                         vehicle.getSeatNumber(), 
                         vehicle.getBikeSpotNumber()));
                 }
-                
                 return this;
             }
         });
-        mainPanel.add(vehicleCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
+        mainPanel.add(vehicleCombo, gbcVehCombo);
+
+        // Ligne 3 -- bouton nouveau véhicule
+        GridBagConstraints gbcNewVeh = new GridBagConstraints();
+        gbcNewVeh.gridx = 0; gbcNewVeh.gridy = 3; gbcNewVeh.gridwidth = 2;
+        gbcNewVeh.insets = new Insets(5, 5, 5, 5);
+        gbcNewVeh.fill = GridBagConstraints.HORIZONTAL;
         JButton newVehicleButton = new JButton("Nouveau véhicule");
         newVehicleButton.addActionListener(e -> showNewVehicleDialog());
-        mainPanel.add(newVehicleButton, gbc);
-        
-        gbc.gridwidth = 1;
-        gbc.gridy = 4;
-        gbc.gridwidth = 2;
+        mainPanel.add(newVehicleButton, gbcNewVeh);
+
+        // Ligne 4 -- check amène vélo
+        GridBagConstraints gbcBringBike = new GridBagConstraints();
+        gbcBringBike.gridx = 0; gbcBringBike.gridy = 4; gbcBringBike.gridwidth = 2;
+        gbcBringBike.insets = new Insets(5, 5, 5, 5);
+        gbcBringBike.fill = GridBagConstraints.HORIZONTAL;
         bringBikeCheckBox = new JCheckBox("J'amène un vélo");
         bringBikeCheckBox.addActionListener(e -> updateBikeComboState());
-        mainPanel.add(bringBikeCheckBox, gbc);
-        
-        gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        mainPanel.add(new JLabel("Sélectionner un vélo:"), gbc);
-        
-        gbc.gridx = 1;
+        mainPanel.add(bringBikeCheckBox, gbcBringBike);
+
+        // Ligne 5 -- label vélo
+        GridBagConstraints gbcBikeLabel = new GridBagConstraints();
+        gbcBikeLabel.gridx = 0; gbcBikeLabel.gridy = 5;
+        gbcBikeLabel.insets = new Insets(5, 5, 5, 5);
+        gbcBikeLabel.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(new JLabel("Sélectionner un vélo:"), gbcBikeLabel);
+
+        // Ligne 5 -- combo vélo
+        GridBagConstraints gbcBikeCombo = new GridBagConstraints();
+        gbcBikeCombo.gridx = 1; gbcBikeCombo.gridy = 5;
+        gbcBikeCombo.insets = new Insets(5, 5, 5, 5);
+        gbcBikeCombo.fill = GridBagConstraints.HORIZONTAL;
         bikeCombo = new JComboBox<>();
         bikeCombo.setEnabled(false);
         bikeCombo.setRenderer(new DefaultListCellRenderer() {
@@ -113,7 +130,6 @@ public class OfferVehicleFrame extends JFrame {
             public Component getListCellRendererComponent(JList<?> list, Object value, 
                     int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                
                 if (value == null) {
                     setText("Sélectionner...");
                 } else if (value instanceof Bike bike) {
@@ -122,37 +138,38 @@ public class OfferVehicleFrame extends JFrame {
                         bike.getWeight(), 
                         bike.getType()));
                 }
-                
                 return this;
             }
         });
-        mainPanel.add(bikeCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
+        mainPanel.add(bikeCombo, gbcBikeCombo);
+
+        // Ligne 6 -- bouton nouveau vélo
+        GridBagConstraints gbcNewBike = new GridBagConstraints();
+        gbcNewBike.gridx = 0; gbcNewBike.gridy = 6; gbcNewBike.gridwidth = 2;
+        gbcNewBike.insets = new Insets(5, 5, 5, 5);
+        gbcNewBike.fill = GridBagConstraints.HORIZONTAL;
         JButton newBikeButton = new JButton("Nouveau vélo");
         newBikeButton.addActionListener(e -> showNewBikeDialog());
-        mainPanel.add(newBikeButton, gbc);
-        
+        mainPanel.add(newBikeButton, gbcNewBike);
+
         add(mainPanel, BorderLayout.CENTER);
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
+
         JButton backButton = new JButton("Retour");
         backButton.addActionListener(e -> {
             dispose();
             new RideCalendarFrame(member).setVisible(true);
         });
-        
+
         JButton offerButton = new JButton("Proposer");
         offerButton.addActionListener(e -> offerVehicle());
-        
+
         buttonPanel.add(backButton);
         buttonPanel.add(offerButton);
         add(buttonPanel, BorderLayout.SOUTH);
     }
-    
+
     private void loadMemberVehicles() {
         try {
             List<Vehicle> memberVehicles = vehicleDAO.findByMember(member);

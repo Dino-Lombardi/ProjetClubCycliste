@@ -20,6 +20,15 @@ public class Member extends Person {
         this.inscriptions = new ArrayList<>();
     }
 
+    public Member(int id, String name, String firstname, String tel, String username, String password, double balance) {
+        super(id, name, firstname, tel, username, password);
+        this.balance = balance;
+        this.categories = new HashSet<>();
+        this.vehicles = new ArrayList<>();
+        this.bikes = new ArrayList<>();
+        this.inscriptions = new ArrayList<>();
+    }
+    
     public Member(int id, String name, String firstname, String tel, String username, double balance) {
         super(id, name, firstname, tel, username);
         this.balance = balance;
@@ -36,6 +45,10 @@ public class Member extends Person {
         if (balance < 0) {
             throw new IllegalArgumentException("Le solde ne peut pas être négatif");
         }
+        
+        if (categories.isEmpty()) {
+			throw new IllegalArgumentException("Au moins une catégorie doit être assignée au membre");
+		}
     }
 
     public double getBalance() {

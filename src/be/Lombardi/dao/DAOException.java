@@ -1,10 +1,12 @@
 package be.Lombardi.dao;
 
+import java.sql.SQLException;
+
 /**
  * Exception personnalisée pour les erreurs DAO
  * Masque les détails techniques à l'utilisateur
  */
-public class DAOException extends RuntimeException {
+public class DAOException extends SQLException {
     
     /**
 	 * 

@@ -1,5 +1,6 @@
 package be.Lombardi.pojo;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.Set;
 
 public class Member extends Person {
     private double balance;
+    private LocalDate lastpaymentdate;
     private Set<CategoryType> categories;
     private List<Vehicle> vehicles;
     private List<Bike> bikes;
@@ -37,6 +39,18 @@ public class Member extends Person {
         this.bikes = new ArrayList<>();
         this.inscriptions = new ArrayList<>();
     }
+    
+    public Member(int id, String name, String firstname, String tel, String username, double balance, LocalDate lastpaymentdate) {
+        super(id, name, firstname, tel, username);
+        this.balance = balance;
+        this.lastpaymentdate = lastpaymentdate;	
+        this.categories = new HashSet<>();
+        this.vehicles = new ArrayList<>();
+        this.bikes = new ArrayList<>();
+        this.inscriptions = new ArrayList<>();
+    }
+    
+    
 
     @Override
     public void validate() {
@@ -54,9 +68,17 @@ public class Member extends Person {
     public double getBalance() {
         return balance;
     }
-
+    
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+    
+    public LocalDate getLastPaymentDate() {
+		return lastpaymentdate;
+	}	
+    
+    public void setLastPaymentDate(LocalDate lastpaymentdate) {
+    	this.lastpaymentdate = lastpaymentdate;
     }
 
     public Set<CategoryType> getCategories() {
@@ -103,6 +125,14 @@ public class Member extends Person {
         return categories.contains(category);
     }
 
+    
+    // Pour vérifier si la cotisation est à jour
+    public boolean isSubscriptionUpToDate() {
+        if (lastpaymentdate == null) return false;
+        return lastpaymentdate.isAfter(LocalDate.now().minusYears(1));
+    }
+    
+    
     @Override
     public String toString() {
         return "Member{" +

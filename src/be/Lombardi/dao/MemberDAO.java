@@ -1,7 +1,10 @@
 package be.Lombardi.dao;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import be.Lombardi.pojo.*;
@@ -105,7 +108,7 @@ public class MemberDAO extends DAO<Member> {
     public Member find(int id) throws DAOException {
         final String SQL = """
             SELECT p.person_id, p.name, p.firstname, p.tel, p.username,
-                   m.balance
+                   m.balance, m.lastpayment_date
             FROM Member m
             JOIN Person p ON m.person_id = p.person_id
             WHERE m.person_id = ?
@@ -122,7 +125,8 @@ public class MemberDAO extends DAO<Member> {
                         getSafe(rs, "firstname"),
                         getSafe(rs, "tel"),
                         getSafe(rs, "username"),
-                        rs.getDouble("balance")
+                        rs.getDouble("balance"),
+                        rs.getDate("lastpayment_date").toLocalDate()
                     );
                     
                     loadCategoriesForMember(member);
@@ -136,6 +140,43 @@ public class MemberDAO extends DAO<Member> {
         
         return null;
     }
+    
+    public List<Member> findall() throws DAOException {
+        final String SQL = """
+            SELECT p.person_id, p.name, p.firstname, p.tel, p.username,
+                   m.balance, m.lastpayment_date
+            FROM Member m
+            JOIN Person p ON m.person_id = p.person_id
+            """;
+        List<Member> members; 
+        Date sqlDate;
+    	LocalDate paymentdate;
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {            
+            try (ResultSet rs = ps.executeQuery()) {
+            	members = new ArrayList<>();
+                while(rs.next()) {
+                	sqlDate = rs.getDate("lastpayment_date");
+                	paymentdate = sqlDate != null ? sqlDate.toLocalDate() : null;
+                    members.add(new Member(
+                        rs.getInt("person_id"),
+                        getSafe(rs, "name"),
+                        getSafe(rs, "firstname"),
+                        getSafe(rs, "tel"),
+                        getSafe(rs, "username"),
+                        rs.getDouble("balance"),
+                        paymentdate
+                    ));
+                                        
+                }
+                return members;
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la recherche du membre", e);
+        }
+    }
+    
+    
 
     private void loadCategoriesForMember(Member member) throws DAOException {
         final String SQL = "SELECT category FROM MemberCategory WHERE person_id = ?";

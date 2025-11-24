@@ -30,6 +30,12 @@ public class Ride {
         this.category = category;
         this.inscriptions = new HashSet<>();
     }
+    
+    // Pour la création et insertion dans la BDD
+    public Ride(String startPlace, LocalDateTime startDate, double fee, Manager organizer,
+				int maxInscriptions, CategoryType category) {
+		this(0, startPlace, startDate, fee, organizer, maxInscriptions, category);
+	}
 
     public void validate() {
         if (startPlace == null || startPlace.trim().isEmpty()) {

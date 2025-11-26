@@ -4,5 +4,10 @@ public enum CategoryType {
 	VTT_DESCENDEUR,
 	VTT_RANDONNEUR,
 	VTT_TRIALISTE,
-	CYCLO
+	CYCLO;
+
+    @Override
+    public String toString() {
+        return name();
+    }
 }

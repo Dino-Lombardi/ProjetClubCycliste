@@ -3,8 +3,10 @@ package be.Lombardi.dao;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import be.Lombardi.pojo.*;
@@ -142,38 +144,59 @@ public class MemberDAO extends DAO<Member> {
     }
     
     public List<Member> findall() throws DAOException {
-        final String SQL = """
+        final String SQL_MEMBERS = """
             SELECT p.person_id, p.name, p.firstname, p.tel, p.username,
                    m.balance, m.lastpayment_date
             FROM Member m
             JOIN Person p ON m.person_id = p.person_id
             """;
-        List<Member> members; 
-        Date sqlDate;
-    	LocalDate paymentdate;
-        
-        try (PreparedStatement ps = connect.prepareStatement(SQL)) {            
-            try (ResultSet rs = ps.executeQuery()) {
-            	members = new ArrayList<>();
-                while(rs.next()) {
-                	sqlDate = rs.getDate("lastpayment_date");
-                	paymentdate = sqlDate != null ? sqlDate.toLocalDate() : null;
-                    members.add(new Member(
-                        rs.getInt("person_id"),
+
+        final String SQL_CATEGORIES = """
+            SELECT person_id, category
+            FROM MemberCategory
+            """;
+
+        List<Member> members = new ArrayList<>();
+        Map<Integer, Member> memberMap = new HashMap<>();
+
+        try (PreparedStatement psMembers = connect.prepareStatement(SQL_MEMBERS)) {
+            try (ResultSet rs = psMembers.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("person_id");
+                    java.sql.Date sqlDate = rs.getDate("lastpayment_date");
+                    java.time.LocalDate paymentdate = sqlDate != null ? sqlDate.toLocalDate() : null;
+                    Member member = new Member(
+                        id,
                         getSafe(rs, "name"),
                         getSafe(rs, "firstname"),
                         getSafe(rs, "tel"),
                         getSafe(rs, "username"),
                         rs.getDouble("balance"),
                         paymentdate
-                    ));
-                                        
+                    );
+                    memberMap.put(id, member);
+                    members.add(member);
                 }
-                return members;
             }
         } catch (SQLException e) {
-            throw new DAOException("Erreur lors de la recherche du membre", e);
+            throw new DAOException("Erreur lors de la recherche des membres", e);
         }
+
+        try (PreparedStatement psCats = connect.prepareStatement(SQL_CATEGORIES)) {
+            try (ResultSet rs = psCats.executeQuery()) {
+                while (rs.next()) {
+                    int memberId = rs.getInt("person_id");
+                    String catStr = rs.getString("category");
+                    if (catStr != null && memberMap.containsKey(memberId)) {
+                            memberMap.get(memberId).getCategories().add(CategoryType.valueOf(catStr));
+                        }
+                    }
+                }
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la récupération des catégories des membres", e);
+        }
+
+        return members;
     }
     
     

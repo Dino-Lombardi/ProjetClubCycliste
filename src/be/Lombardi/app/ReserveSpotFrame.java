@@ -87,12 +87,9 @@ public class ReserveSpotFrame extends JFrame {
                     setText("Sélectionner...");
                 } else if (value instanceof Vehicle vehicle) {
                     Member owner = vehicle.getOwner();
-                    setText(String.format("%s %s - Véhicule #%d (%d places, %d places vélos)",
+                    setText(String.format("%s %s - " + vehicle,
                         owner.getFirstname(),
-                        owner.getName(),
-                        vehicle.getId(),
-                        vehicle.getSeatNumber(),
-                        vehicle.getBikeSpotNumber()));
+                        owner.getName()));
                 }
                 
                 return this;
@@ -148,10 +145,7 @@ public class ReserveSpotFrame extends JFrame {
                 if (value == null) {
                     setText("Sélectionner...");
                 } else if (value instanceof Bike bike) {
-                    setText(String.format("Vélo #%d - %.1fkg, %s", 
-                        bike.getId(), 
-                        bike.getWeight(), 
-                        bike.getType()));
+                    setText(bike.toString());
                 }
                 return this;
             }

@@ -14,33 +14,33 @@ public class OfferVehicleFrame extends JFrame {
     private final VehicleDAO vehicleDAO;
     private final BikeDAO bikeDAO;
     private final InscriptionDAO inscriptionDAO;
-    
+
     private JComboBox<Vehicle> vehicleCombo;
     private JCheckBox bringBikeCheckBox;
     private JComboBox<Bike> bikeCombo;
-    
+
     public OfferVehicleFrame(Member member, Ride ride) {
         this.member = member;
         this.ride = ride;
-        
+
         AbstractDAOFactory daoFactory = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);
         this.vehicleDAO = (VehicleDAO) daoFactory.getVehicleDAO();
         this.bikeDAO = (BikeDAO) daoFactory.getBikeDAO();
         this.inscriptionDAO = (InscriptionDAO) daoFactory.getInscriptionDAO();
-        
+
         setTitle("Proposer un véhicule - " + ride.getStartPlace());
         setSize(500, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        
+
         initComponents();
         loadMemberVehicles();
         loadMemberBikes();
     }
-    
+
     private void initComponents() {
         setLayout(new BorderLayout(10, 10));
-        
+
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -63,34 +63,17 @@ public class OfferVehicleFrame extends JFrame {
 
         // Ligne 2 -- label
         GridBagConstraints gbcVehLabel = new GridBagConstraints();
-        gbcVehLabel.gridx = 0; gbcVehLabel.gridy = 2; 
+        gbcVehLabel.gridx = 0; gbcVehLabel.gridy = 2;
         gbcVehLabel.insets = new Insets(5, 5, 5, 5);
         gbcVehLabel.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(new JLabel("Sélectionner un véhicule:"), gbcVehLabel);
 
-        // Ligne 2 -- combo
+        // Ligne 2 -- combo (sans setRenderer => utilise toString())
         GridBagConstraints gbcVehCombo = new GridBagConstraints();
         gbcVehCombo.gridx = 1; gbcVehCombo.gridy = 2;
         gbcVehCombo.insets = new Insets(5, 5, 5, 5);
         gbcVehCombo.fill = GridBagConstraints.HORIZONTAL;
         vehicleCombo = new JComboBox<>();
-        vehicleCombo.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, 
-                    int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                
-                if (value == null) {
-                    setText("Sélectionner...");
-                } else if (value instanceof Vehicle vehicle) {
-                    setText(String.format("Véhicule #%d - %d places, %d places vélos", 
-                        vehicle.getId(), 
-                        vehicle.getSeatNumber(), 
-                        vehicle.getBikeSpotNumber()));
-                }
-                return this;
-            }
-        });
         mainPanel.add(vehicleCombo, gbcVehCombo);
 
         // Ligne 3 -- bouton nouveau véhicule
@@ -118,29 +101,13 @@ public class OfferVehicleFrame extends JFrame {
         gbcBikeLabel.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(new JLabel("Sélectionner un vélo:"), gbcBikeLabel);
 
-        // Ligne 5 -- combo vélo
+        // Ligne 5 -- combo vélo (pas de setRenderer => toString())
         GridBagConstraints gbcBikeCombo = new GridBagConstraints();
         gbcBikeCombo.gridx = 1; gbcBikeCombo.gridy = 5;
         gbcBikeCombo.insets = new Insets(5, 5, 5, 5);
         gbcBikeCombo.fill = GridBagConstraints.HORIZONTAL;
         bikeCombo = new JComboBox<>();
         bikeCombo.setEnabled(false);
-        bikeCombo.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, 
-                    int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value == null) {
-                    setText("Sélectionner...");
-                } else if (value instanceof Bike bike) {
-                    setText(String.format("Vélo #%d - %.1fkg, %s", 
-                        bike.getId(), 
-                        bike.getWeight(), 
-                        bike.getType()));
-                }
-                return this;
-            }
-        });
         mainPanel.add(bikeCombo, gbcBikeCombo);
 
         // Ligne 6 -- bouton nouveau vélo
@@ -173,14 +140,14 @@ public class OfferVehicleFrame extends JFrame {
     private void loadMemberVehicles() {
         try {
             List<Vehicle> memberVehicles = vehicleDAO.findByMember(member);
-            
+
             vehicleCombo.removeAllItems();
             vehicleCombo.addItem(null);
-            
+
             for (Vehicle vehicle : memberVehicles) {
                 vehicleCombo.addItem(vehicle);
             }
-            
+
         } catch (DAOException e) {
             JOptionPane.showMessageDialog(this,
                 e.getUserMessage(),
@@ -188,18 +155,18 @@ public class OfferVehicleFrame extends JFrame {
                 JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void loadMemberBikes() {
         try {
             List<Bike> memberBikes = bikeDAO.findByMember(member);
-            
+
             bikeCombo.removeAllItems();
             bikeCombo.addItem(null);
-            
+
             for (Bike bike : memberBikes) {
                 bikeCombo.addItem(bike);
             }
-            
+
         } catch (DAOException e) {
             JOptionPane.showMessageDialog(this,
                 e.getUserMessage(),
@@ -207,11 +174,11 @@ public class OfferVehicleFrame extends JFrame {
                 JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void updateBikeComboState() {
         bikeCombo.setEnabled(bringBikeCheckBox.isSelected());
     }
-    
+
     private void showNewVehicleDialog() {
         JTextField seatsField = new JTextField(5);
         JTextField bikeSpotsField = new JTextField(5);
@@ -222,19 +189,19 @@ public class OfferVehicleFrame extends JFrame {
         panel.add(new JLabel("Nombre de places vélos:"));
         panel.add(bikeSpotsField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, 
+        int result = JOptionPane.showConfirmDialog(this, panel,
             "Nouveau véhicule", JOptionPane.OK_CANCEL_OPTION);
-        
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 int seats = Integer.parseInt(seatsField.getText());
                 int bikeSpots = Integer.parseInt(bikeSpotsField.getText());
-                
+
                 Vehicle newVehicle = new Vehicle(0, seats, bikeSpots, member);
-                
+
                 if (vehicleDAO.create(newVehicle)) {
                     loadMemberVehicles();
-                    
+
                     // Sélectionner automatiquement le nouveau véhicule créé
                     for (int i = 0; i < vehicleCombo.getItemCount(); i++) {
                         Vehicle vehicle = vehicleCombo.getItemAt(i);
@@ -243,28 +210,28 @@ public class OfferVehicleFrame extends JFrame {
                             break;
                         }
                     }
-                    
+
                     JOptionPane.showMessageDialog(this, "Véhicule créé avec succès!");
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                     "Veuillez entrer des valeurs numériques valides",
                     "Erreur de saisie",
                     JOptionPane.WARNING_MESSAGE);
             } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
                     "Validation échouée",
                     JOptionPane.WARNING_MESSAGE);
             } catch (DAOException ex) {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                     ex.getUserMessage(),
                     "Erreur",
                     JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-    
+
     private void showNewBikeDialog() {
         JTextField weightField = new JTextField(5);
         JTextField typeField = new JTextField(10);
@@ -278,20 +245,20 @@ public class OfferVehicleFrame extends JFrame {
         panel.add(new JLabel("Longueur (cm):"));
         panel.add(lengthField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, 
+        int result = JOptionPane.showConfirmDialog(this, panel,
             "Nouveau vélo", JOptionPane.OK_CANCEL_OPTION);
-        
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 double weight = Double.parseDouble(weightField.getText());
                 String type = typeField.getText();
                 double length = Double.parseDouble(lengthField.getText());
-                
+
                 Bike newBike = new Bike(0, weight, type, length, member);
-                
+
                 if (bikeDAO.create(newBike)) {
                     loadMemberBikes();
-                    
+
                     // Sélectionner automatiquement le nouveau vélo créé
                     for (int i = 0; i < bikeCombo.getItemCount(); i++) {
                         Bike bike = bikeCombo.getItemAt(i);
@@ -300,28 +267,28 @@ public class OfferVehicleFrame extends JFrame {
                             break;
                         }
                     }
-                    
+
                     JOptionPane.showMessageDialog(this, "Vélo créé avec succès!");
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                     "Veuillez entrer des valeurs numériques valides",
                     "Erreur de saisie",
                     JOptionPane.WARNING_MESSAGE);
             } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
                     "Validation échouée",
                     JOptionPane.WARNING_MESSAGE);
             } catch (DAOException ex) {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                     ex.getUserMessage(),
                     "Erreur",
                     JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-    
+
     private void offerVehicle() {
         try {
             Vehicle selectedVehicle = (Vehicle) vehicleCombo.getSelectedItem();
@@ -332,10 +299,10 @@ public class OfferVehicleFrame extends JFrame {
                     JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             boolean hasBike = bringBikeCheckBox.isSelected();
             Bike selectedBike = null;
-            
+
             if (hasBike) {
                 selectedBike = (Bike) bikeCombo.getSelectedItem();
                 if (selectedBike == null) {
@@ -346,18 +313,18 @@ public class OfferVehicleFrame extends JFrame {
                     return;
                 }
             }
-            
+
             // Créer l'inscription en tant que conducteur (isPassenger = false)
             Inscription inscription = new Inscription(0, false, hasBike, member, ride);
             inscription.setVehicle(selectedVehicle);
-            
+
             if (hasBike) {
                 inscription.setBike(selectedBike);
             }
-            
+
             // Valider selon les règles métier du Ride
             ride.validateInscription(inscription);
-            
+
             if (inscriptionDAO.create(inscription)) {
                 JOptionPane.showMessageDialog(this,
                     "Véhicule proposé avec succès !",
@@ -366,19 +333,19 @@ public class OfferVehicleFrame extends JFrame {
                 dispose();
                 new RideCalendarFrame(member).setVisible(true);
             }
-            
+
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this,
                 e.getMessage(),
                 "Validation échouée",
                 JOptionPane.WARNING_MESSAGE);
-                
+
         } catch (IllegalStateException e) {
             JOptionPane.showMessageDialog(this,
                 e.getMessage(),
                 "Inscription impossible",
                 JOptionPane.WARNING_MESSAGE);
-                
+
         } catch (DAOException e) {
             JOptionPane.showMessageDialog(this,
                 e.getUserMessage(),

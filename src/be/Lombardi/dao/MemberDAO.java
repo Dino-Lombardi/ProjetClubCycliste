@@ -121,6 +121,9 @@ public class MemberDAO extends DAO<Member> {
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    Date rsdate = rs.getDate("lastpayment_date");
+                    LocalDate date = rsdate != null ? rsdate.toLocalDate() : null; 
+
                     Member member = new Member(
                         rs.getInt("person_id"),
                         getSafe(rs, "name"),
@@ -128,7 +131,7 @@ public class MemberDAO extends DAO<Member> {
                         getSafe(rs, "tel"),
                         getSafe(rs, "username"),
                         rs.getDouble("balance"),
-                        rs.getDate("lastpayment_date").toLocalDate()
+                        date
                     );
                     
                     loadCategoriesForMember(member);

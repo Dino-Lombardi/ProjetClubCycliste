@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Ride {
     private int id;
@@ -199,7 +200,7 @@ public class Ride {
             .map(Inscription::getVehicle)
             .filter(Objects::nonNull)
             .distinct()
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     public boolean isDatePassed() {

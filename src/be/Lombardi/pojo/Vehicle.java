@@ -64,12 +64,7 @@ public class Vehicle {
     @Override
     public String toString() {
         if (id == 0) return "Sélectionner...";
-        return "Vehicle{" +
-               "id=" + id +
-               ", seatNumber=" + seatNumber +
-               ", bikeSpotNumber=" + bikeSpotNumber +
-               ", owner=" + (owner != null ? owner.getId() : "null") +
-               '}';
+        return String.format("Véhicule #%d - %d places - %d places vélos", id, seatNumber, bikeSpotNumber);
     }
 
     @Override

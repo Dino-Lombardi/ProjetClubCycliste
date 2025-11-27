@@ -9,7 +9,6 @@ public class Inscription {
     private Vehicle vehicle;
     private Bike bike;
 
-    public Inscription() {}
 
     public Inscription(int id, boolean isPassenger, boolean hasBike, Member member, Ride ride) {
         this.id = id;
@@ -18,6 +17,8 @@ public class Inscription {
         this.member = member;
         this.ride = ride;
     }
+    public Inscription() {}
+
 
     public void validate() {
         if (member == null) {
@@ -61,16 +62,32 @@ public class Inscription {
         return isPassenger;
     }
 
+    public void setisPassenger(boolean isPassenger) {
+		this.isPassenger = isPassenger;
+	}
+    
     public boolean hasBike() {
         return hasBike;
     }
 
+    public void setHasBike(boolean hasBike) {
+		this.hasBike = hasBike;
+	}
+    
     public Member getMember() {
         return member;
     }
-
+    
+    public void setMember(Member member) {
+		this.member = member;
+	}
+    
     public Ride getRide() {
         return ride;
+    }
+    
+    public void setRide(Ride ride) {
+    	this.ride = ride;
     }
 
     public Vehicle getVehicle() {

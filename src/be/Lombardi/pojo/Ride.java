@@ -16,9 +16,6 @@ public class Ride {
     private CategoryType category;
     private Set<Inscription> inscriptions;
 
-    public Ride() {
-        this.inscriptions = new HashSet<>();
-    }
 
     public Ride(int id, String startPlace, LocalDateTime startDate, double fee, Manager organizer,
                 int maxInscriptions, CategoryType category) {
@@ -37,6 +34,10 @@ public class Ride {
 				int maxInscriptions, CategoryType category) {
 		this(0, startPlace, startDate, fee, organizer, maxInscriptions, category);
 	}
+    
+    public Ride() {
+        this.inscriptions = new HashSet<>();
+    }
 
     public void validate() {
         if (startPlace == null || startPlace.trim().isEmpty()) {

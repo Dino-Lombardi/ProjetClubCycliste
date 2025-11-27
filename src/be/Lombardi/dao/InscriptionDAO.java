@@ -1,6 +1,8 @@
 package be.Lombardi.dao;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import be.Lombardi.pojo.*;
 
@@ -124,6 +126,49 @@ public class InscriptionDAO extends DAO<Inscription> {
             throw new DAOException("Erreur lors de la recherche de l'inscription", e);
         }
         return null;
+    }
+    
+    public List<Inscription> findByMember(Member member) throws DAOException {
+        final String SQL = """
+            SELECT 
+                i.inscription_id, i.is_passenger, i. has_bike, 
+                r.ride_id, r.start_place, r.start_date, r.fee
+            FROM Inscription i
+            JOIN Ride r ON i.ride_id = r.ride_id
+            WHERE i.member_id = ? 
+            ORDER BY r.start_date DESC
+            """;
+        
+        List<Inscription> inscriptions = new ArrayList<>();
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps. setInt(1, member.getId());
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // Construire la Ride
+                    Ride ride = new Ride();
+                    ride.setId(rs.getInt("ride_id"));
+                    ride.setStartPlace(getSafe(rs, "start_place"));
+                    ride.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
+                    ride.setFee(rs.getDouble("fee"));
+                    
+                    // Construire l'Inscription
+                    Inscription inscription = new Inscription();
+                    inscription.setId(rs.getInt("inscription_id"));
+                    inscription.setisPassenger(rs.getBoolean("is_passenger"));
+                    inscription.setHasBike(rs.getBoolean("has_bike"));
+                    inscription.setMember(member);
+                    inscription.setRide(ride);
+                    
+                    inscriptions.add(inscription);
+                }
+            }
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la recherche des inscriptions du membre", e);
+        }
+        
+        return inscriptions;
     }
 
     private String getSafe(ResultSet rs, String col) {

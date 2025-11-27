@@ -123,7 +123,8 @@ public class MemberDashboardFrame extends JFrame {
         btnRegistrations.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnRegistrations.setMaximumSize(new Dimension(320, 45));
         btnRegistrations.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Bientôt disponible !");
+            dispose();
+            new ShowMyInscriptionsFrame(member).setVisible(true);
         });
         centerPanel.add(btnRegistrations);
 

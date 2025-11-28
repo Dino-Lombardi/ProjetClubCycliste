@@ -203,9 +203,7 @@ public class RideCalendarFrame extends JFrame {
                 .filter(ride -> ride.getStartDate().toLocalDate().equals(localDate))
                 .collect(Collectors.toList());
             
-            updateTable();
-            System.out.println(allRides.get(0).getVehicles());
-            
+            updateTable();            
         } catch (DAOException e) {
             JOptionPane.showMessageDialog(this,
                 e.getUserMessage(),

@@ -68,21 +68,6 @@ public class ManagerDashboardFrame extends JFrame {
         centerPanel.add(actionsLabel);
         centerPanel.add(Box.createVerticalStrut(18));
 
-        // Bouton voir balades
-        JButton btnSeeRides = new JButton("📅 Liste des balades");
-        btnSeeRides.setFont(new Font("SansSerif", Font.BOLD, 14));
-        btnSeeRides.setBackground(new Color(21, 156, 89));
-        btnSeeRides.setForeground(Color.WHITE);
-        btnSeeRides.setFocusPainted(false);
-        btnSeeRides.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnSeeRides.setMaximumSize(new Dimension(270, 40));
-        btnSeeRides.addActionListener(e -> {
-            dispose();
-            new RideListFrame(manager).setVisible(true);
-        });
-        centerPanel.add(btnSeeRides);
-        centerPanel.add(Box.createVerticalStrut(14));
-
         // Bouton nouvelle balade
         JButton btnCreateRide = new JButton("Organiser une balade");
         btnCreateRide.setFont(new Font("SansSerif", Font.BOLD, 14));

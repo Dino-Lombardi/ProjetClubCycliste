@@ -81,21 +81,6 @@ public class TreasurerDashboardFrame extends JFrame {
             new CotisationPaymentsFrame(treasurer).setVisible(true);
         });
         centerPanel.add(btnMemberList);
-        centerPanel.add(Box.createVerticalStrut(14));
-
-        // Remboursements chauffeurs
-        JButton btnReimburse = new JButton("💸 Remboursements covoiturage");
-        btnReimburse.setFont(new Font("SansSerif", Font.BOLD, 14));
-        btnReimburse.setBackground(new Color(230, 120, 0));
-        btnReimburse.setForeground(Color.WHITE);
-        btnReimburse.setFocusPainted(false);
-        btnReimburse.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnReimburse.setMaximumSize(new Dimension(320, 40));
-        btnReimburse.addActionListener(e -> {
-            dispose();
-            new RefundFrame(treasurer).setVisible(true);
-        });
-        centerPanel.add(btnReimburse);
 
         centerPanel.add(Box.createVerticalGlue());
         getContentPane().add(centerPanel, BorderLayout.CENTER);

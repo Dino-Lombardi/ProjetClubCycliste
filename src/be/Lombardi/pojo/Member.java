@@ -70,6 +70,9 @@ public class Member extends Person {
     }
     
     public void setBalance(double balance) {
+    	if (balance < 0) {
+            throw new IllegalArgumentException("Le solde ne peut pas être négatif");
+    	}
         this.balance = balance;
     }
     

@@ -81,7 +81,7 @@ public class MemberDAO extends DAO<Member> {
             SET name = ?, firstname = ?, tel = ?, username = ?, password = ?
             WHERE person_id = ?
             """;
-        final String SQL_MEMBER = "UPDATE Member SET balance = ? WHERE person_id = ?";
+        final String SQL_MEMBER = "UPDATE Member SET balance = ?, lastpayment_date = ? WHERE person_id = ?";
         
         try (PreparedStatement psPerson = connect.prepareStatement(SQL_PERSON)) {
             psPerson.setString(1, member.getName());
@@ -96,13 +96,36 @@ public class MemberDAO extends DAO<Member> {
             if (rowsAffected > 0) {
                 try (PreparedStatement psMember = connect.prepareStatement(SQL_MEMBER)) {
                     psMember.setDouble(1, member.getBalance());
-                    psMember.setInt(2, member.getId());
+                    psMember.setDate(2, Date.valueOf(member.getLastPaymentDate()));
+                    psMember.setInt(3, member.getId());
                     return psMember.executeUpdate() > 0;
                 }
             }
             return false;
         } catch (SQLException e) {
             throw new DAOException("Erreur lors de la mise à jour du membre", e);
+        }
+    }
+    
+    
+    public boolean updateBalanceAndPaymentDate(Member member) throws DAOException {
+        final String SQL = "UPDATE Member SET balance = ?, lastpayment_date = ? WHERE person_id = ?";
+        
+        try (PreparedStatement ps = connect.prepareStatement(SQL)) {
+            ps.setDouble(1, member.getBalance());
+            
+            if (member.getLastPaymentDate() != null) {
+                ps.setDate(2, Date.valueOf(member.getLastPaymentDate()));
+            } else {
+                ps.setNull(2, Types.DATE);
+            }
+            
+            ps.setInt(3, member.getId());
+            
+            return ps.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            throw new DAOException("Erreur lors de la mise à jour du solde et de la date de paiement", e);
         }
     }
 

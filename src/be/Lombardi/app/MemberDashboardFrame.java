@@ -127,6 +127,20 @@ public class MemberDashboardFrame extends JFrame {
             new ShowMyInscriptionsFrame(member).setVisible(true);
         });
         centerPanel.add(btnRegistrations);
+        centerPanel.add(Box.createVerticalStrut(15));
+
+        JButton btnBalance = new JButton("💰 Gérer mon solde et cotisation");
+        btnBalance.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnBalance.setBackground(new Color(60, 179, 113));
+        btnBalance.setForeground(Color.WHITE);
+        btnBalance. setFocusPainted(false);
+        btnBalance.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnBalance.setMaximumSize(new Dimension(320, 45));
+        btnBalance.addActionListener(e -> {
+            dispose();
+            new ManageBalanceFrame(member).setVisible(true);
+        });
+        centerPanel.add(btnBalance);
 
         centerPanel.add(Box.createVerticalGlue());
         getContentPane().add(centerPanel, BorderLayout.CENTER);

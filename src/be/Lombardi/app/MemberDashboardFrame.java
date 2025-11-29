@@ -200,10 +200,14 @@ public class MemberDashboardFrame extends JFrame {
                     int nbSeats = Integer.parseInt(seats.getText());
                     int nbBikes = Integer.parseInt(bikes.getText());
                     Vehicle v = new Vehicle(0, nbSeats, nbBikes, member);
+                    v.validate();
                     vehicleDAO.create(v);
                     refreshComboBoxVehicles();
                     vehCombo.setSelectedItem(v);
-                } catch (Exception ex) { JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE); }
+                } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(this, "Veuillez insérer des nombres entiers", "Erreur", JOptionPane.ERROR_MESSAGE);}
+                  catch (IllegalArgumentException ex) { JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);}
+                  catch (DAOException ex) { JOptionPane.showMessageDialog(this, ex.getUserMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);}
+
             }
         });
         GridBagConstraints gbcVehAdd = new GridBagConstraints();
@@ -260,10 +264,13 @@ public class MemberDashboardFrame extends JFrame {
                     String t = type.getText().trim();
                     double l = Double.parseDouble(longu.getText());
                     Bike b = new Bike(0, w, t, l, member);
+                    b.validate();
                     bikeDAO.create(b);
                     refreshComboBoxBikes();
                     bikeCombo.setSelectedItem(b);
-                } catch (Exception ex) { JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE); }
+                }   catch (NumberFormatException ex) { JOptionPane.showMessageDialog(this, "Veuillez insérer des nombres entiers", "Erreur", JOptionPane.ERROR_MESSAGE);}
+                    catch (IllegalArgumentException ex) { JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);}
+                    catch (DAOException ex) { JOptionPane.showMessageDialog(this, ex.getUserMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);}
             }
         });
         GridBagConstraints gbcBikeAdd = new GridBagConstraints();

@@ -7,7 +7,6 @@ import be.Lombardi.pojo.Manager;
 
 public class RideListFrame extends JFrame {
 
-	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
     private final Manager manager;
 

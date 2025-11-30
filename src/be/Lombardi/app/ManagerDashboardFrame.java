@@ -7,7 +7,6 @@ import java.awt.*;
 
 public class ManagerDashboardFrame extends JFrame {
 
-    private static final long serialVersionUID = 234234234242342342L;
     private final Manager manager;
 
     public ManagerDashboardFrame(Manager manager) {

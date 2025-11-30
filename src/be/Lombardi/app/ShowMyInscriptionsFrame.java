@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util. List;
 
 public class ShowMyInscriptionsFrame extends JFrame {
-    private Member member;
+	private Member member;
     private final InscriptionDAO inscriptionDAO;
     private JTable inscriptionsTable;
     private DefaultTableModel tableModel;

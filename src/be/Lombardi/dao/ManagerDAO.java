@@ -105,13 +105,8 @@ public class ManagerDAO extends DAO<Manager> {
                 if (rs.next()) {
                     CategoryType category = null;
                     String categoryStr = getSafe(rs, "category");
-                    if (!categoryStr.isEmpty()) {
-                        try {
+                    if (!categoryStr.isEmpty())
                             category = CategoryType.valueOf(categoryStr.toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            // Catégorie invalide
-                        }
-                    }
                     
                     return new Manager(
                         rs.getInt("person_id"),
@@ -147,13 +142,8 @@ public class ManagerDAO extends DAO<Manager> {
             while (rs.next()) {
                 CategoryType category = null;
                 String categoryStr = getSafe(rs, "category");
-                if (!categoryStr.isEmpty()) {
-                    try {
+                if (!categoryStr.isEmpty()) 
                         category = CategoryType.valueOf(categoryStr.toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        // Catégorie invalide
-                    }
-                }
                 
                 Manager manager = new Manager(
                     rs.getInt("person_id"),

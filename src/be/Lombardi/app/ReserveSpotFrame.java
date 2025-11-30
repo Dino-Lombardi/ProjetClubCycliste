@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ReserveSpotFrame extends JFrame {
-    private final Member member;
+	private final Member member;
     private final Ride ride;
     private final BikeDAO bikeDAO;
     private final InscriptionDAO inscriptionDAO;

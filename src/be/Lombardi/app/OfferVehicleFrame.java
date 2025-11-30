@@ -9,7 +9,7 @@ import java.awt.*;
 import java.util.List;
 
 public class OfferVehicleFrame extends JFrame {
-    private final Member member;
+	private final Member member;
     private final Ride ride;
     private final VehicleDAO vehicleDAO;
     private final BikeDAO bikeDAO;

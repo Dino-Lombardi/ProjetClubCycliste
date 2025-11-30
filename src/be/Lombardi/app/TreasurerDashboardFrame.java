@@ -7,8 +7,7 @@ import java.awt.*;
 
 public class TreasurerDashboardFrame extends JFrame {
 
-    private static final long serialVersionUID = 3153124412412432342L;
-    private final Treasurer treasurer;
+	private final Treasurer treasurer;
 
     public TreasurerDashboardFrame(Treasurer treasurer) {
         this.treasurer = treasurer;

@@ -29,14 +29,11 @@ import javax.swing.table.DefaultTableModel;
 import be.Lombardi.dao.DAOException;
 import be.Lombardi.dao.RideDAO;
 import be.Lombardi.daofactory.AbstractDAOFactory;
-import be.Lombardi.app.OfferVehicleFrame;
-import be.Lombardi.app.ReserveSpotFrame;
 import be.Lombardi.pojo.Member;
 import be.Lombardi.pojo.Ride;
 import com.toedter.calendar.JDateChooser;
 
 public class RideCalendarFrame extends JFrame {
-    private static final long serialVersionUID = 1L;
     private final Member member;
     private final RideDAO rideDAO;
     private JDateChooser dateChooser;

@@ -189,8 +189,8 @@ public class MemberDAO extends DAO<Member> {
             try (ResultSet rs = psMembers.executeQuery()) {
                 while (rs.next()) {
                     int id = rs.getInt("person_id");
-                    java.sql.Date sqlDate = rs.getDate("lastpayment_date");
-                    java.time.LocalDate paymentdate = sqlDate != null ? sqlDate.toLocalDate() : null;
+                    Date sqlDate = rs.getDate("lastpayment_date");
+                    LocalDate paymentdate = sqlDate != null ? sqlDate.toLocalDate() : null;
                     Member member = new Member(
                         id,
                         getSafe(rs, "name"),

@@ -32,12 +32,9 @@ import be.Lombardi.dao.PersonDAO;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 public class LoginFrame extends JFrame {
 
-    private static final long serialVersionUID = 1L;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private final AbstractDAOFactory adf = AbstractDAOFactory.getFactory(AbstractDAOFactory.DAO_FACTORY);

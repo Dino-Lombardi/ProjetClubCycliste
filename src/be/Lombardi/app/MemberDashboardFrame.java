@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 public class MemberDashboardFrame extends JFrame {
 
-    private static final long serialVersionUID = 6725957947388162080L;
     private final BikeDAO bikeDAO;
     private final VehicleDAO vehicleDAO;
     private final Member member;

@@ -35,9 +35,7 @@ public class CreateMemberFrame extends JFrame {
         JPanel main = new JPanel(new GridBagLayout());
         main.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        int row = 0;
-        
-                // Titre
+        // Titre
                 GridBagConstraints gbcTitle = new GridBagConstraints();
                 gbcTitle.gridx = 0; 
                 gbcTitle.gridy = 0; 
@@ -61,8 +59,7 @@ public class CreateMemberFrame extends JFrame {
         gbcNomField.fill = GridBagConstraints.HORIZONTAL;
         nameField = new JTextField();
         main.add(nameField, gbcNomField);
-        row++;
-
+        
         // Prénom
         GridBagConstraints gbcPrenomLabel = new GridBagConstraints();
         gbcPrenomLabel.gridx = 0; gbcPrenomLabel.gridy = 2;
@@ -76,8 +73,7 @@ public class CreateMemberFrame extends JFrame {
         gbcPrenomField.fill = GridBagConstraints.HORIZONTAL;
         firstnameField = new JTextField();
         main.add(firstnameField, gbcPrenomField);
-        row++;
-
+        
         // Téléphone
         GridBagConstraints gbcTelLabel = new GridBagConstraints();
         gbcTelLabel.gridx = 0; gbcTelLabel.gridy = 3;
@@ -91,8 +87,7 @@ public class CreateMemberFrame extends JFrame {
         gbcTelField.fill = GridBagConstraints.HORIZONTAL;
         telField = new JTextField();
         main.add(telField, gbcTelField);
-        row++;
-
+        
         // Nom d'utilisateur
         GridBagConstraints gbcUserLabel = new GridBagConstraints();
         gbcUserLabel.gridx = 0; gbcUserLabel.gridy = 4;
@@ -106,8 +101,7 @@ public class CreateMemberFrame extends JFrame {
         gbcUserField.fill = GridBagConstraints.HORIZONTAL;
         usernameField = new JTextField();
         main.add(usernameField, gbcUserField);
-        row++;
-
+        
         // Mot de passe
         GridBagConstraints gbcPassLabel = new GridBagConstraints();
         gbcPassLabel.gridx = 0; gbcPassLabel.gridy = 5;
@@ -121,8 +115,7 @@ public class CreateMemberFrame extends JFrame {
         gbcPassField.fill = GridBagConstraints.HORIZONTAL;
         passwordField = new JPasswordField();
         main.add(passwordField, gbcPassField);
-        row++;
-
+        
         // Confirmation mot de passe
         GridBagConstraints gbcConfirmLabel = new GridBagConstraints();
         gbcConfirmLabel.gridx = 0; gbcConfirmLabel.gridy = 6;
@@ -136,8 +129,7 @@ public class CreateMemberFrame extends JFrame {
         gbcConfirmField.fill = GridBagConstraints.HORIZONTAL;
         confirmPasswordField = new JPasswordField();
         main.add(confirmPasswordField, gbcConfirmField);
-        row++;
-
+        
         // Séparateur
         GridBagConstraints gbcSep = new GridBagConstraints();
         gbcSep.gridx = 0; gbcSep.gridy = 8; gbcSep.gridwidth = 2;

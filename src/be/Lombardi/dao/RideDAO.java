@@ -194,7 +194,7 @@ public class RideDAO extends DAO<Ride> {
     }
 
     // Batch loading : charge inscriptions de TOUTES les rides en 1 seule requête avec IN (?, ?, ...)
-    // ✅ INCLUT le Vehicle dans la même requête (pas de redondance)
+    // INCLUT le Vehicle dans la même requête (pas de redondance)
     private void loadInscriptionsForRidesMap(Map<Integer, Ride> ridesById) throws DAOException {
         final String SQL = """
             SELECT i.inscription_id, i.is_passenger, i.has_bike, i.member_id, i.ride_id, i.vehicle_id, i.bike_id,
@@ -289,7 +289,7 @@ public class RideDAO extends DAO<Ride> {
             ride
         );
         
-        // ✅ Charger le Vehicle si présent (évite la redondance)
+        // Charger le Vehicle si présent (évite la redondance)
         int vehicleId = rs.getInt("vehicle_id");
         if (vehicleId != 0) {
             Member owner = new Member(
@@ -310,9 +310,7 @@ public class RideDAO extends DAO<Ride> {
             
             inscription.setVehicle(vehicle);
         }
-        
-        // TODO: Charger le Bike si has_bike = true et bike_id != null
-        
+                
         return inscription;
     }
 

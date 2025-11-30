@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CotisationPaymentsFrame extends JFrame {
-    private final Treasurer treasurer;
+	private final Treasurer treasurer;
     private final MemberDAO memberDAO;
     private JTable memberTable;
     private DefaultTableModel tableModel;

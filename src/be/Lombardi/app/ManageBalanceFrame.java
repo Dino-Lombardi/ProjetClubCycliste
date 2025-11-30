@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java. time.format.DateTimeFormatter;
 
 public class ManageBalanceFrame extends JFrame {
-    private final Member member;
+	private final Member member;
     private final MemberDAO memberDAO;
     private JLabel currentBalanceLabel;
     private JLabel cotisationStatusLabel;
